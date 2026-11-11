@@ -3,6 +3,7 @@ services:
     build: .
     init: true
     restart: unless-stopped
+    user: "${SFMAP_UID:-1000}:${SFMAP_GID:-1000}"
     ports:
       - "${HOST_BIND:-127.0.0.1}:${PORT:-3000}:3000"
       - "${SHARE_BIND:-127.0.0.1}:${SHARE_PORT:-3001}:3001"

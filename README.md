@@ -17,13 +17,13 @@ SFMap — production-карта автомобильного сообществ�
     chmod +x install.sh
     ./install.sh
 
-Установщик проверит Linux и права администратора, при необходимости установит Docker Engine и Compose plugin, затем предложит режим сети: только локальный, карта в LAN с локальной админкой или публичная карта с локальной админкой. Пароль администратора вводится скрыто и не сохраняется в .env.
+Установщик проверит Linux и права администратора, при необходимости установит Docker Engine и Compose v2, затем предложит режим сети: только локальный, карта на выбранном LAN-адресе с локальной админкой или публичная карта с локальной админкой. Он проверяет формат и занятость портов, готовность Docker и health-check приложения. Пароль администратора вводится скрыто и не сохраняется в `.env`; при повторном запуске прежний `.env` сохраняется в резервную копию, а ключ и сессии администратора перевыпускаются.
 
-После запуска установщик показывает адрес карты, путь к secrets/admin-access.txt, JWE-файлу и SSH-команду для админки:
+После запуска установщик показывает адрес карты, путь к `secrets/admin-access.txt`, JWE-файлу и SSH-команду для админки:
 
     ssh -L 3000:127.0.0.1:3000 user@server
 
-Откройте адрес из secrets/admin-access.txt через http://localhost:3000. Для входа нужны файл ключа и пароль. Повторный запуск выпускает новый ключ и отзывает прежние сессии. Для публичного HTTPS используйте reverse proxy перед listener-ами.
+Откройте адрес из `secrets/admin-access.txt` через `http://localhost:3000`. Для входа нужны файл ключа и пароль. Для публичного HTTPS используйте reverse proxy перед listener-ами. Установщик не меняет firewall без отдельного ответа `y`; при выборе LAN или публичного режима откройте только порт карты.
 
 ## Ручной запуск
 
@@ -32,6 +32,7 @@ SFMap — production-карта автомобильного сообществ�
     npm ci
     cp .env.example .env
     mkdir -p data secrets
+    chmod 700 data secrets
     SFMAP_ADMIN_PASSWORD='длинный пароль' npm run setup-admin
     npm run build
     npm start
@@ -42,9 +43,11 @@ SFMap — production-карта автомобильного сообществ�
 
     cp .env.example .env
     mkdir -p data secrets
+    chmod 700 data secrets
     docker compose build
-    docker compose up -d
+    docker compose run --rm --no-deps --user 0 --entrypoint /bin/sh sfmap -c 'chown -R 1000:1000 /app/data /app/secrets'
     printf '%s\n' 'длинный пароль' | docker compose run --rm --no-deps -T sfmap npm run setup-admin -- --password-stdin
+    docker compose up -d
 
 SQLite и аватарки хранятся в именованном томе sfmap-data, а ./secrets подключается отдельно. Данные и секреты не попадают в образ. Проверка состояния: curl http://127.0.0.1:3000/api/health.
 
@@ -52,10 +55,10 @@ SQLite и аватарки хранятся в именованном томе s
 
 ## SQLite и резервные копии
 
-Основной файл — data/sfmap.sqlite при ручном запуске или том sfmap-data в Compose. Перед копированием остановите запись и выполните checkpoint:
+Основной файл — data/sfmap.sqlite при ручном запуске или том sfmap-data в Compose. Для согласованной копии выполните `VACUUM INTO` внутри работающего контейнера:
 
-    docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const db=new DatabaseSync('/app/data/sfmap.sqlite'); db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); db.close();"
-    docker run --rm -v sfmap_sfmap-data:/data -v "$PWD":/backup alpine cp /data/sfmap.sqlite /backup/sfmap.sqlite.backup
+    docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const db=new DatabaseSync('/app/data/sfmap.sqlite'); db.exec(\"VACUUM INTO '/tmp/sfmap-backup.sqlite'\"); db.close();"
+    docker compose cp sfmap:/tmp/sfmap-backup.sqlite ./sfmap.sqlite.backup
 
 Восстановление выполняйте при остановленном контейнере. Резервные копии храните отдельно от сервера.
 
@@ -67,7 +70,7 @@ SQLite и аватарки хранятся в именованном томе s
     TELEGRAM_PROXY_MODE=external
     TELEGRAM_PROXY_FILE=./data/telegram-proxies.json
 
-Для локального адаптера используйте TELEGRAM_PROXY_MODE=local и TELEGRAM_LOCAL_PROXY_URL=http://127.0.0.1:8080. Обновление списка: npm run proxies:refresh. При ошибке прежняя фотография сохраняется, повтор назначается через 15 минут.
+Для локального адаптера используйте TELEGRAM_PROXY_MODE=local и `TELEGRAM_LOCAL_PROXY_URL=http://host.docker.internal:8080` в Compose (или адрес адаптера, доступный из контейнера). Обновление списка: npm run proxies:refresh. При ошибке прежняя фотография сохраняется, повтор назначается через 15 минут.
 
 ## Проверки
 
