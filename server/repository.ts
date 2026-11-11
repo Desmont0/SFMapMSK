@@ -1,0 +1,63 @@
+import { createHash, randomUUID } from 'node:crypto';
+import { db } from './db.ts';
+import { participantSchema, type Participant, type ParticipantInput } from '../shared/participant.ts';
+import { requireRegion } from './geography.ts';
+
+export type RowError = { row: number; message: string };
+export type Snapshot = { participants: Participant[]; errors: RowError[]; syncedAt: string | null };
+const fail = (message: string, status = 409): never => { throw Object.assign(new Error(message), { status }); };
+
+type ParticipantRow = { id: string; data: string; updated_at: string; revision: string };
+
+function decode(row: ParticipantRow): Participant {
+  return { ...participantSchema.parse(JSON.parse(row.data)), id: row.id, updatedAt: row.updated_at, revision: row.revision };
+}
+
+export class Repository {
+  snapshot: Snapshot = { participants: [], errors: [], syncedAt: null };
+  lastError: string | null = null;
+
+  async initialize() { await this.refresh(); }
+
+  async refresh() {
+    try {
+      const rows = db.prepare('SELECT id,data,updated_at,revision FROM participants ORDER BY rowid').all() as ParticipantRow[];
+      this.snapshot = { participants: rows.map(decode), errors: [], syncedAt: new Date().toISOString() };
+      this.lastError = null;
+      return this.snapshot;
+    } catch (error) {
+      this.lastError = 'Не удалось прочитать базу данных. Проверьте журнал сервера и доступ к диску.';
+      throw error;
+    }
+  }
+
+  async mutate(action: 'create' | 'update' | 'delete', input?: ParticipantInput, id?: string, expected?: string) {
+    let result: Participant | null = null;
+    db.exec('BEGIN IMMEDIATE');
+    try {
+      const row = id ? db.prepare('SELECT id,data,updated_at,revision FROM participants WHERE id=?').get(id) as ParticipantRow | undefined : undefined;
+      if (action !== 'create' && !row) fail('Запись больше не существует. Обновите список.');
+      if (action !== 'create' && row!.revision !== expected) fail('Запись уже изменена в другой вкладке. Обновите список.');
+      if (action === 'delete') {
+        db.prepare('DELETE FROM participants WHERE id=?').run(id!);
+      } else {
+        if (action === 'create' && (db.prepare('SELECT count(*) AS count FROM participants').get() as any).count >= 1000) fail('Достигнут лимит 1000 участников.', 400);
+        const data = participantSchema.parse(input);
+        requireRegion(data.latitude, data.longitude);
+        const participantId = action === 'create' ? randomUUID() : row!.id;
+        const previousTime = row ? Date.parse(row.updated_at) : 0;
+        const updatedAt = new Date(Math.max(Date.now(), previousTime + 1)).toISOString();
+        const revision = createHash('sha256').update(JSON.stringify({ ...data, id: participantId, updatedAt })).digest('hex');
+        if (action === 'create') db.prepare('INSERT INTO participants(id,data,updated_at,revision) VALUES(?,?,?,?)').run(participantId, JSON.stringify(data), updatedAt, revision);
+        else db.prepare('UPDATE participants SET data=?,updated_at=?,revision=? WHERE id=?').run(JSON.stringify(data), updatedAt, revision, participantId);
+        result = { ...data, id: participantId, updatedAt, revision };
+      }
+      db.exec('COMMIT');
+    } catch (error) {
+      db.exec('ROLLBACK');
+      throw error;
+    }
+    await this.refresh();
+    return result;
+  }
+}

@@ -1,0 +1,10 @@
+node_modules/
+dist/
+data/
+secrets/
+.env
+.env.*
+!.env.example
+*.key.jwe
+test-results/
+playwright-report/

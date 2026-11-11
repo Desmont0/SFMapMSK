@@ -1,0 +1,1430 @@
+[
+  {
+    "id": "city-17b4ba8a-4300-44e4-bbf7-5f0a8118ddf5",
+    "label": "Апрелевка",
+    "kind": "city",
+    "latitude": 55.52769,
+    "longitude": 37.06514
+  },
+  {
+    "id": "city-27c5bc66-61bf-4a17-b0cd-ca0eb64192d6",
+    "label": "Балашиха",
+    "kind": "city",
+    "latitude": 55.79639,
+    "longitude": 37.93828
+  },
+  {
+    "id": "city-76a108ed-a04d-41d0-a556-39865e793886",
+    "label": "Белоозёрский",
+    "kind": "city",
+    "latitude": 55.45958,
+    "longitude": 38.43897
+  },
+  {
+    "id": "city-582fae29-5955-4dba-9f77-ebf9a8e60827",
+    "label": "Бронницы",
+    "kind": "city",
+    "latitude": 55.42554,
+    "longitude": 38.26414
+  },
+  {
+    "id": "city-abda86de-97b7-4098-9d09-e1835c6e8797",
+    "label": "Верея",
+    "kind": "city",
+    "latitude": 55.34337,
+    "longitude": 36.18569
+  },
+  {
+    "id": "city-9a72b510-9413-41d8-b076-576fbfd78404",
+    "label": "Видное",
+    "kind": "city",
+    "latitude": 55.55172,
+    "longitude": 37.7062
+  },
+  {
+    "id": "city-ca8fb626-709c-4851-a8d6-cbfd592c3bf8",
+    "label": "Волоколамск",
+    "kind": "city",
+    "latitude": 56.03565,
+    "longitude": 35.95851
+  },
+  {
+    "id": "city-555e9f1b-627a-4444-b19e-27fb9d67a093",
+    "label": "Воскресенск",
+    "kind": "city",
+    "latitude": 55.30715,
+    "longitude": 38.7028
+  },
+  {
+    "id": "city-a8ad4e79-a4c9-4f2e-ade5-a7fa3ab0da03",
+    "label": "Высоковск",
+    "kind": "city",
+    "latitude": 56.33595,
+    "longitude": 36.52518
+  },
+  {
+    "id": "city-963efb34-c804-43b4-9298-8e145d188ed0",
+    "label": "Голицыно",
+    "kind": "city",
+    "latitude": 55.61906,
+    "longitude": 36.98568
+  },
+  {
+    "id": "city-05b3833e-37b3-470e-bf21-78adf1eec36f",
+    "label": "Дедовск",
+    "kind": "city",
+    "latitude": 55.87033,
+    "longitude": 37.1245
+  },
+  {
+    "id": "city-6fa8b59c-cda7-4c98-8b41-e0bcb2867e16",
+    "label": "Дзержинский",
+    "kind": "city",
+    "latitude": 55.62409,
+    "longitude": 37.84403
+  },
+  {
+    "id": "city-0d8a246f-6446-403e-91c6-3aec9cdbfc32",
+    "label": "Дмитров",
+    "kind": "city",
+    "latitude": 56.34775,
+    "longitude": 37.52667
+  },
+  {
+    "id": "city-dcf522ad-e032-4db9-9dbb-e30d2cddfadb",
+    "label": "Долгопрудный",
+    "kind": "city",
+    "latitude": 55.9386,
+    "longitude": 37.5101
+  },
+  {
+    "id": "city-d177d438-ea69-4169-854c-d4512d7c8ebe",
+    "label": "Домодедово",
+    "kind": "city",
+    "latitude": 55.43633,
+    "longitude": 37.7665
+  },
+  {
+    "id": "city-70643e37-137c-4e66-a06e-22feb7784740",
+    "label": "Дрезна",
+    "kind": "city",
+    "latitude": 55.74431,
+    "longitude": 38.84985
+  },
+  {
+    "id": "city-c86ad06c-c721-4a7e-aa06-f622eed83b6f",
+    "label": "Дубна",
+    "kind": "city",
+    "latitude": 56.74179,
+    "longitude": 37.17572
+  },
+  {
+    "id": "city-17a3426e-add6-4b2e-b4b1-6f36da02b6ab",
+    "label": "Егорьевск",
+    "kind": "city",
+    "latitude": 55.38301,
+    "longitude": 39.03583
+  },
+  {
+    "id": "city-fd91f393-4820-437f-a50c-907e9856c374",
+    "label": "Жуковский",
+    "kind": "city",
+    "latitude": 55.5998,
+    "longitude": 38.12243
+  },
+  {
+    "id": "city-98e62df9-591a-45af-876e-471060d057aa",
+    "label": "Зарайск",
+    "kind": "city",
+    "latitude": 54.76246,
+    "longitude": 38.8851
+  },
+  {
+    "id": "city-4bae8c68-e107-4352-9d4b-f937f90469ac",
+    "label": "Звенигород",
+    "kind": "city",
+    "latitude": 55.72971,
+    "longitude": 36.8554
+  },
+  {
+    "id": "city-zelenograd",
+    "label": "Зеленоград",
+    "kind": "city",
+    "latitude": 55.9825,
+    "longitude": 37.1814,
+    "aliases": [
+      "Москва Зеленоград",
+      "Матушкино",
+      "Силино",
+      "Старое Крюково",
+      "Крюково",
+      "Савелки"
+    ]
+  },
+  {
+    "id": "city-e12cf909-779a-4352-af51-7a2a07668f60",
+    "label": "Ивантеевка",
+    "kind": "city",
+    "latitude": 55.97417,
+    "longitude": 37.92075
+  },
+  {
+    "id": "city-f05b2b62-f54c-4b44-aff2-6bc3e55a640c",
+    "label": "Истра",
+    "kind": "city",
+    "latitude": 55.90623,
+    "longitude": 36.86015
+  },
+  {
+    "id": "city-45b3f9ac-43cd-4bd0-90af-74cf64ea67f7",
+    "label": "Кашира",
+    "kind": "city",
+    "latitude": 54.85334,
+    "longitude": 38.19044
+  },
+  {
+    "id": "city-2365151a-7a78-4af5-a8fb-a4faff856df5",
+    "label": "Клин",
+    "kind": "city",
+    "latitude": 56.34256,
+    "longitude": 36.724
+  },
+  {
+    "id": "city-b367fb03-29f9-4dac-8d85-01595cfb6ad9",
+    "label": "Коломна",
+    "kind": "city",
+    "latitude": 55.10281,
+    "longitude": 38.7531
+  },
+  {
+    "id": "city-819d6910-b4d1-474f-ad10-c1fa944dfca4",
+    "label": "Королёв",
+    "kind": "city",
+    "latitude": 55.91618,
+    "longitude": 37.85454
+  },
+  {
+    "id": "city-67488a01-ccb7-4638-bcad-117db0fbe9a3",
+    "label": "Котельники",
+    "kind": "city",
+    "latitude": 55.65979,
+    "longitude": 37.86312
+  },
+  {
+    "id": "city-bc5d23ce-e886-4dc7-976c-6b8be6d501d2",
+    "label": "Красноармейск",
+    "kind": "city",
+    "latitude": 56.10543,
+    "longitude": 38.14084
+  },
+  {
+    "id": "city-63fcf18a-365e-451f-baee-8d09ac50b773",
+    "label": "Красногорск",
+    "kind": "city",
+    "latitude": 55.83172,
+    "longitude": 37.32953
+  },
+  {
+    "id": "city-6bec0be0-e5a7-4bf1-907a-9a1dadedc867",
+    "label": "Краснозаводск",
+    "kind": "city",
+    "latitude": 56.441,
+    "longitude": 38.23203
+  },
+  {
+    "id": "city-6e8a99b2-e6bd-4169-acb3-f7e6cd53be3b",
+    "label": "Краснознаменск",
+    "kind": "city",
+    "latitude": 55.5979,
+    "longitude": 37.03937
+  },
+  {
+    "id": "city-50341359-842b-4ba1-b7f2-398a7b72f829",
+    "label": "Кубинка",
+    "kind": "city",
+    "latitude": 55.5755,
+    "longitude": 36.6952
+  },
+  {
+    "id": "city-9eb64ec8-9b97-465c-8c4d-ae667862dd62",
+    "label": "Куровское",
+    "kind": "city",
+    "latitude": 55.57923,
+    "longitude": 38.92077
+  },
+  {
+    "id": "city-4ae832d1-e532-45a2-b8a7-8f29aa0149e9",
+    "label": "Ликино-Дулёво",
+    "kind": "city",
+    "latitude": 55.70783,
+    "longitude": 38.95781
+  },
+  {
+    "id": "city-67c493d4-d141-407e-868b-dafc289503f3",
+    "label": "Лобня",
+    "kind": "city",
+    "latitude": 56.03289,
+    "longitude": 37.4614
+  },
+  {
+    "id": "city-96c869d9-51a8-4db6-8011-9fc459c9a78c",
+    "label": "Лосино-Петровский",
+    "kind": "city",
+    "latitude": 55.87132,
+    "longitude": 38.2006
+  },
+  {
+    "id": "city-7c6d9ebf-8b6a-4435-a174-eb8018f7c598",
+    "label": "Луховицы",
+    "kind": "city",
+    "latitude": 54.96521,
+    "longitude": 39.02603
+  },
+  {
+    "id": "city-bba16a72-09e1-4f3f-93af-df5ecab6714b",
+    "label": "Лыткарино",
+    "kind": "city",
+    "latitude": 55.57782,
+    "longitude": 37.90335
+  },
+  {
+    "id": "city-427b4e19-f221-4abc-8904-81f7409c1ce3",
+    "label": "Люберцы",
+    "kind": "city",
+    "latitude": 55.6765,
+    "longitude": 37.89813
+  },
+  {
+    "id": "city-4f86a11c-4258-4859-a227-a79c9ef400ff",
+    "label": "Можайск",
+    "kind": "city",
+    "latitude": 55.50693,
+    "longitude": 36.02404
+  },
+  {
+    "id": "moscow-112",
+    "label": "Москва, Академический",
+    "kind": "district",
+    "latitude": 55.6895,
+    "longitude": 37.57694
+  },
+  {
+    "id": "moscow-91",
+    "label": "Москва, Алексеевский",
+    "kind": "district",
+    "latitude": 55.81133,
+    "longitude": 37.65272
+  },
+  {
+    "id": "moscow-136",
+    "label": "Москва, Алтуфьевский",
+    "kind": "district",
+    "latitude": 55.87843,
+    "longitude": 37.58744
+  },
+  {
+    "id": "moscow-123",
+    "label": "Москва, Арбат",
+    "kind": "district",
+    "latitude": 55.75091,
+    "longitude": 37.59214
+  },
+  {
+    "id": "moscow-139",
+    "label": "Москва, Аэропорт",
+    "kind": "district",
+    "latitude": 55.80055,
+    "longitude": 37.54285
+  },
+  {
+    "id": "moscow-130",
+    "label": "Москва, Бабушкинский",
+    "kind": "district",
+    "latitude": 55.86711,
+    "longitude": 37.66263
+  },
+  {
+    "id": "moscow-94",
+    "label": "Москва, Басманный",
+    "kind": "district",
+    "latitude": 55.76635,
+    "longitude": 37.6707
+  },
+  {
+    "id": "moscow-220",
+    "label": "Москва, Беговой",
+    "kind": "district",
+    "latitude": 55.78335,
+    "longitude": 37.56498
+  },
+  {
+    "id": "new-moscow-Бекасово",
+    "label": "Москва, Бекасово",
+    "kind": "district",
+    "latitude": 55.434,
+    "longitude": 36.805
+  },
+  {
+    "id": "moscow-216",
+    "label": "Москва, Бескудниковский",
+    "kind": "district",
+    "latitude": 55.86381,
+    "longitude": 37.55172
+  },
+  {
+    "id": "moscow-214",
+    "label": "Москва, Бибирево",
+    "kind": "district",
+    "latitude": 55.89638,
+    "longitude": 37.61552
+  },
+  {
+    "id": "moscow-140",
+    "label": "Москва, Бирюлёво Восточное",
+    "kind": "district",
+    "latitude": 55.59677,
+    "longitude": 37.68263
+  },
+  {
+    "id": "moscow-93",
+    "label": "Москва, Бирюлёво Западное",
+    "kind": "district",
+    "latitude": 55.59107,
+    "longitude": 37.63874
+  },
+  {
+    "id": "moscow-102",
+    "label": "Москва, Богородское",
+    "kind": "district",
+    "latitude": 55.82003,
+    "longitude": 37.70811
+  },
+  {
+    "id": "moscow-143",
+    "label": "Москва, Братеево",
+    "kind": "district",
+    "latitude": 55.63267,
+    "longitude": 37.76002
+  },
+  {
+    "id": "moscow-171",
+    "label": "Москва, Бутырский",
+    "kind": "district",
+    "latitude": 55.81361,
+    "longitude": 37.59379
+  },
+  {
+    "id": "moscow-106",
+    "label": "Москва, Вешняки",
+    "kind": "district",
+    "latitude": 55.72939,
+    "longitude": 37.805
+  },
+  {
+    "id": "moscow-204",
+    "label": "Москва, Внуково",
+    "kind": "district",
+    "latitude": 55.60109,
+    "longitude": 37.27541
+  },
+  {
+    "id": "moscow-180",
+    "label": "Москва, Войковский",
+    "kind": "district",
+    "latitude": 55.82805,
+    "longitude": 37.49684
+  },
+  {
+    "id": "new-moscow-Вороново",
+    "label": "Москва, Вороново",
+    "kind": "district",
+    "latitude": 55.322,
+    "longitude": 37.155
+  },
+  {
+    "id": "moscow-164",
+    "label": "Москва, Восточное Дегунино",
+    "kind": "district",
+    "latitude": 55.8761,
+    "longitude": 37.55886
+  },
+  {
+    "id": "moscow-169",
+    "label": "Москва, Восточное Измайлово",
+    "kind": "district",
+    "latitude": 55.79565,
+    "longitude": 37.82075
+  },
+  {
+    "id": "moscow-87",
+    "label": "Москва, Восточный",
+    "kind": "district",
+    "latitude": 55.81335,
+    "longitude": 37.87263
+  },
+  {
+    "id": "moscow-141",
+    "label": "Москва, Выхино-Жулебино",
+    "kind": "district",
+    "latitude": 55.69833,
+    "longitude": 37.82605
+  },
+  {
+    "id": "moscow-168",
+    "label": "Москва, Гагаринский",
+    "kind": "district",
+    "latitude": 55.69753,
+    "longitude": 37.55942
+  },
+  {
+    "id": "moscow-162",
+    "label": "Москва, Головинский",
+    "kind": "district",
+    "latitude": 55.85239,
+    "longitude": 37.50982
+  },
+  {
+    "id": "moscow-100",
+    "label": "Москва, Гольяново",
+    "kind": "district",
+    "latitude": 55.82889,
+    "longitude": 37.79478
+  },
+  {
+    "id": "moscow-114",
+    "label": "Москва, Даниловский",
+    "kind": "district",
+    "latitude": 55.70688,
+    "longitude": 37.63702
+  },
+  {
+    "id": "moscow-225",
+    "label": "Москва, Дмитровский",
+    "kind": "district",
+    "latitude": 55.89021,
+    "longitude": 37.52463
+  },
+  {
+    "id": "moscow-228",
+    "label": "Москва, Донской",
+    "kind": "district",
+    "latitude": 55.70526,
+    "longitude": 37.6056
+  },
+  {
+    "id": "moscow-210",
+    "label": "Москва, Дорогомилово",
+    "kind": "district",
+    "latitude": 55.73819,
+    "longitude": 37.53189
+  },
+  {
+    "id": "moscow-128",
+    "label": "Москва, Замоскворечье",
+    "kind": "district",
+    "latitude": 55.73472,
+    "longitude": 37.63468
+  },
+  {
+    "id": "moscow-226",
+    "label": "Москва, Западное Дегунино",
+    "kind": "district",
+    "latitude": 55.87059,
+    "longitude": 37.52034
+  },
+  {
+    "id": "moscow-90",
+    "label": "Москва, Зюзино",
+    "kind": "district",
+    "latitude": 55.65381,
+    "longitude": 37.58879
+  },
+  {
+    "id": "moscow-175",
+    "label": "Москва, Зябликово",
+    "kind": "district",
+    "latitude": 55.6213,
+    "longitude": 37.74904
+  },
+  {
+    "id": "moscow-98",
+    "label": "Москва, Ивановское",
+    "kind": "district",
+    "latitude": 55.76818,
+    "longitude": 37.82521
+  },
+  {
+    "id": "moscow-99",
+    "label": "Москва, Измайлово",
+    "kind": "district",
+    "latitude": 55.78131,
+    "longitude": 37.77431
+  },
+  {
+    "id": "moscow-150",
+    "label": "Москва, Капотня",
+    "kind": "district",
+    "latitude": 55.64071,
+    "longitude": 37.81242
+  },
+  {
+    "id": "new-moscow-Коммунарка",
+    "label": "Москва, Коммунарка",
+    "kind": "district",
+    "latitude": 55.569,
+    "longitude": 37.489
+  },
+  {
+    "id": "moscow-134",
+    "label": "Москва, Коньково",
+    "kind": "district",
+    "latitude": 55.64047,
+    "longitude": 37.53125
+  },
+  {
+    "id": "moscow-221",
+    "label": "Москва, Коптево",
+    "kind": "district",
+    "latitude": 55.83406,
+    "longitude": 37.53278
+  },
+  {
+    "id": "moscow-129",
+    "label": "Москва, Косино-Ухтомский",
+    "kind": "district",
+    "latitude": 55.71393,
+    "longitude": 37.89084
+  },
+  {
+    "id": "moscow-110",
+    "label": "Москва, Котловка",
+    "kind": "district",
+    "latitude": 55.67783,
+    "longitude": 37.59715
+  },
+  {
+    "id": "new-moscow-Краснопахорский",
+    "label": "Москва, Краснопахорский",
+    "kind": "district",
+    "latitude": 55.432,
+    "longitude": 37.273
+  },
+  {
+    "id": "moscow-126",
+    "label": "Москва, Красносельский",
+    "kind": "district",
+    "latitude": 55.7764,
+    "longitude": 37.6586
+  },
+  {
+    "id": "moscow-173",
+    "label": "Москва, Крылатское",
+    "kind": "district",
+    "latitude": 55.76107,
+    "longitude": 37.41503
+  },
+  {
+    "id": "moscow-229",
+    "label": "Москва, Кузьминки",
+    "kind": "district",
+    "latitude": 55.69852,
+    "longitude": 37.77546
+  },
+  {
+    "id": "moscow-159",
+    "label": "Москва, Кунцево",
+    "kind": "district",
+    "latitude": 55.74928,
+    "longitude": 37.40647
+  },
+  {
+    "id": "moscow-155",
+    "label": "Москва, Куркино",
+    "kind": "district",
+    "latitude": 55.89192,
+    "longitude": 37.39636
+  },
+  {
+    "id": "moscow-227",
+    "label": "Москва, Левобережный",
+    "kind": "district",
+    "latitude": 55.86564,
+    "longitude": 37.46667
+  },
+  {
+    "id": "moscow-117",
+    "label": "Москва, Лефортово",
+    "kind": "district",
+    "latitude": 55.75435,
+    "longitude": 37.70362
+  },
+  {
+    "id": "moscow-215",
+    "label": "Москва, Лианозово",
+    "kind": "district",
+    "latitude": 55.9003,
+    "longitude": 37.56392
+  },
+  {
+    "id": "moscow-167",
+    "label": "Москва, Ломоносовский",
+    "kind": "district",
+    "latitude": 55.67904,
+    "longitude": 37.53363
+  },
+  {
+    "id": "moscow-161",
+    "label": "Москва, Лосиноостровский",
+    "kind": "district",
+    "latitude": 55.87831,
+    "longitude": 37.69741
+  },
+  {
+    "id": "moscow-151",
+    "label": "Москва, Люблино",
+    "kind": "district",
+    "latitude": 55.67422,
+    "longitude": 37.77742
+  },
+  {
+    "id": "moscow-132",
+    "label": "Москва, Марфино",
+    "kind": "district",
+    "latitude": 55.83283,
+    "longitude": 37.58873
+  },
+  {
+    "id": "moscow-131",
+    "label": "Москва, Марьина Роща",
+    "kind": "district",
+    "latitude": 55.79652,
+    "longitude": 37.61192
+  },
+  {
+    "id": "moscow-149",
+    "label": "Москва, Марьино",
+    "kind": "district",
+    "latitude": 55.65416,
+    "longitude": 37.74045
+  },
+  {
+    "id": "moscow-101",
+    "label": "Москва, Метрогородок",
+    "kind": "district",
+    "latitude": 55.84385,
+    "longitude": 37.72755
+  },
+  {
+    "id": "moscow-232",
+    "label": "Москва, Мещанский",
+    "kind": "district",
+    "latitude": 55.77813,
+    "longitude": 37.62858
+  },
+  {
+    "id": "moscow-156",
+    "label": "Москва, Митино",
+    "kind": "district",
+    "latitude": 55.84482,
+    "longitude": 37.36409
+  },
+  {
+    "id": "moscow-124",
+    "label": "Москва, Можайский",
+    "kind": "district",
+    "latitude": 55.71436,
+    "longitude": 37.41607
+  },
+  {
+    "id": "moscow-222",
+    "label": "Москва, Молжаниновский",
+    "kind": "district",
+    "latitude": 55.93274,
+    "longitude": 37.37685
+  },
+  {
+    "id": "moscow-146",
+    "label": "Москва, Москворечье-Сабурово",
+    "kind": "district",
+    "latitude": 55.64309,
+    "longitude": 37.67585
+  },
+  {
+    "id": "moscow-113",
+    "label": "Москва, Нагатино-Садовники",
+    "kind": "district",
+    "latitude": 55.67126,
+    "longitude": 37.64355
+  },
+  {
+    "id": "moscow-147",
+    "label": "Москва, Нагатинский Затон",
+    "kind": "district",
+    "latitude": 55.67543,
+    "longitude": 37.6829
+  },
+  {
+    "id": "moscow-142",
+    "label": "Москва, Нагорный",
+    "kind": "district",
+    "latitude": 55.66564,
+    "longitude": 37.61534
+  },
+  {
+    "id": "moscow-178",
+    "label": "Москва, Некрасовка",
+    "kind": "district",
+    "latitude": 55.70197,
+    "longitude": 37.93678
+  },
+  {
+    "id": "moscow-118",
+    "label": "Москва, Нижегородский",
+    "kind": "district",
+    "latitude": 55.73284,
+    "longitude": 37.72389
+  },
+  {
+    "id": "moscow-207",
+    "label": "Москва, Ново-Переделкино",
+    "kind": "district",
+    "latitude": 55.64618,
+    "longitude": 37.35846
+  },
+  {
+    "id": "moscow-160",
+    "label": "Москва, Новогиреево",
+    "kind": "district",
+    "latitude": 55.74784,
+    "longitude": 37.80159
+  },
+  {
+    "id": "moscow-172",
+    "label": "Москва, Новокосино",
+    "kind": "district",
+    "latitude": 55.73991,
+    "longitude": 37.86568
+  },
+  {
+    "id": "moscow-88",
+    "label": "Москва, Обручевский",
+    "kind": "district",
+    "latitude": 55.65794,
+    "longitude": 37.5188
+  },
+  {
+    "id": "moscow-145",
+    "label": "Москва, Орехово-Борисово Северное",
+    "kind": "district",
+    "latitude": 55.62179,
+    "longitude": 37.70086
+  },
+  {
+    "id": "moscow-144",
+    "label": "Москва, Орехово-Борисово Южное",
+    "kind": "district",
+    "latitude": 55.60403,
+    "longitude": 37.73885
+  },
+  {
+    "id": "moscow-133",
+    "label": "Москва, Останкинский",
+    "kind": "district",
+    "latitude": 55.82811,
+    "longitude": 37.61507
+  },
+  {
+    "id": "moscow-223",
+    "label": "Москва, Отрадное",
+    "kind": "district",
+    "latitude": 55.86341,
+    "longitude": 37.60321
+  },
+  {
+    "id": "moscow-107",
+    "label": "Москва, Очаково-Матвеевское",
+    "kind": "district",
+    "latitude": 55.69178,
+    "longitude": 37.44851
+  },
+  {
+    "id": "moscow-105",
+    "label": "Москва, Перово",
+    "kind": "district",
+    "latitude": 55.75109,
+    "longitude": 37.76412
+  },
+  {
+    "id": "moscow-148",
+    "label": "Москва, Печатники",
+    "kind": "district",
+    "latitude": 55.67571,
+    "longitude": 37.70327
+  },
+  {
+    "id": "moscow-217",
+    "label": "Москва, Покровское-Стрешнево",
+    "kind": "district",
+    "latitude": 55.82464,
+    "longitude": 37.44389
+  },
+  {
+    "id": "moscow-103",
+    "label": "Москва, Преображенское",
+    "kind": "district",
+    "latitude": 55.79627,
+    "longitude": 37.72242
+  },
+  {
+    "id": "moscow-121",
+    "label": "Москва, Пресненский",
+    "kind": "district",
+    "latitude": 55.76001,
+    "longitude": 37.56187
+  },
+  {
+    "id": "moscow-109",
+    "label": "Москва, Проспект Вернадского",
+    "kind": "district",
+    "latitude": 55.67511,
+    "longitude": 37.49893
+  },
+  {
+    "id": "moscow-209",
+    "label": "Москва, Раменки",
+    "kind": "district",
+    "latitude": 55.70702,
+    "longitude": 37.51278
+  },
+  {
+    "id": "moscow-174",
+    "label": "Москва, Ростокино",
+    "kind": "district",
+    "latitude": 55.83505,
+    "longitude": 37.65178
+  },
+  {
+    "id": "moscow-179",
+    "label": "Москва, Рязанский",
+    "kind": "district",
+    "latitude": 55.72082,
+    "longitude": 37.76755
+  },
+  {
+    "id": "moscow-152",
+    "label": "Москва, Савёловский",
+    "kind": "district",
+    "latitude": 55.79986,
+    "longitude": 37.56747
+  },
+  {
+    "id": "moscow-89",
+    "label": "Москва, Свиблово",
+    "kind": "district",
+    "latitude": 55.85306,
+    "longitude": 37.64849
+  },
+  {
+    "id": "moscow-125",
+    "label": "Москва, Северное Бутово",
+    "kind": "district",
+    "latitude": 55.56805,
+    "longitude": 37.57022
+  },
+  {
+    "id": "moscow-170",
+    "label": "Москва, Северное Измайлово",
+    "kind": "district",
+    "latitude": 55.80855,
+    "longitude": 37.7973
+  },
+  {
+    "id": "moscow-213",
+    "label": "Москва, Северное Медведково",
+    "kind": "district",
+    "latitude": 55.88721,
+    "longitude": 37.65245
+  },
+  {
+    "id": "moscow-224",
+    "label": "Москва, Северное Тушино",
+    "kind": "district",
+    "latitude": 55.86417,
+    "longitude": 37.42729
+  },
+  {
+    "id": "moscow-165",
+    "label": "Москва, Северный",
+    "kind": "district",
+    "latitude": 55.93238,
+    "longitude": 37.55015
+  },
+  {
+    "id": "moscow-153",
+    "label": "Москва, Сокол",
+    "kind": "district",
+    "latitude": 55.80372,
+    "longitude": 37.50359
+  },
+  {
+    "id": "moscow-104",
+    "label": "Москва, Соколиная Гора",
+    "kind": "district",
+    "latitude": 55.77302,
+    "longitude": 37.72677
+  },
+  {
+    "id": "moscow-158",
+    "label": "Москва, Сокольники",
+    "kind": "district",
+    "latitude": 55.80313,
+    "longitude": 37.67791
+  },
+  {
+    "id": "moscow-208",
+    "label": "Москва, Солнцево",
+    "kind": "district",
+    "latitude": 55.6543,
+    "longitude": 37.40159
+  },
+  {
+    "id": "moscow-230",
+    "label": "Москва, Строгино",
+    "kind": "district",
+    "latitude": 55.80001,
+    "longitude": 37.40745
+  },
+  {
+    "id": "moscow-120",
+    "label": "Москва, Таганский",
+    "kind": "district",
+    "latitude": 55.74028,
+    "longitude": 37.66597
+  },
+  {
+    "id": "moscow-122",
+    "label": "Москва, Тверской",
+    "kind": "district",
+    "latitude": 55.76969,
+    "longitude": 37.60508
+  },
+  {
+    "id": "moscow-116",
+    "label": "Москва, Текстильщики",
+    "kind": "district",
+    "latitude": 55.707,
+    "longitude": 37.73668
+  },
+  {
+    "id": "moscow-135",
+    "label": "Москва, Тёплый Стан",
+    "kind": "district",
+    "latitude": 55.62886,
+    "longitude": 37.4881
+  },
+  {
+    "id": "moscow-163",
+    "label": "Москва, Тимирязевский",
+    "kind": "district",
+    "latitude": 55.82729,
+    "longitude": 37.55816
+  },
+  {
+    "id": "moscow-108",
+    "label": "Москва, Тропарёво-Никулино",
+    "kind": "district",
+    "latitude": 55.66108,
+    "longitude": 37.4693
+  },
+  {
+    "id": "moscow-176",
+    "label": "Москва, Филёвский Парк",
+    "kind": "district",
+    "latitude": 55.74709,
+    "longitude": 37.47509
+  },
+  {
+    "id": "moscow-211",
+    "label": "Москва, Фили-Давыдково",
+    "kind": "district",
+    "latitude": 55.72652,
+    "longitude": 37.4683
+  },
+  {
+    "id": "new-moscow-Филимонковский",
+    "label": "Москва, Филимонковский",
+    "kind": "district",
+    "latitude": 55.557,
+    "longitude": 37.347
+  },
+  {
+    "id": "moscow-127",
+    "label": "Москва, Хамовники",
+    "kind": "district",
+    "latitude": 55.73034,
+    "longitude": 37.57668
+  },
+  {
+    "id": "moscow-166",
+    "label": "Москва, Ховрино",
+    "kind": "district",
+    "latitude": 55.86892,
+    "longitude": 37.4889
+  },
+  {
+    "id": "moscow-157",
+    "label": "Москва, Хорошёво-Мнёвники",
+    "kind": "district",
+    "latitude": 55.77241,
+    "longitude": 37.46252
+  },
+  {
+    "id": "moscow-219",
+    "label": "Москва, Хорошёвский",
+    "kind": "district",
+    "latitude": 55.78179,
+    "longitude": 37.52935
+  },
+  {
+    "id": "moscow-177",
+    "label": "Москва, Царицыно",
+    "kind": "district",
+    "latitude": 55.62512,
+    "longitude": 37.65599
+  },
+  {
+    "id": "moscow-197",
+    "label": "Москва, Черёмушки",
+    "kind": "district",
+    "latitude": 55.66578,
+    "longitude": 37.56235
+  },
+  {
+    "id": "moscow-111",
+    "label": "Москва, Чертаново Северное",
+    "kind": "district",
+    "latitude": 55.63326,
+    "longitude": 37.60411
+  },
+  {
+    "id": "moscow-92",
+    "label": "Москва, Чертаново Центральное",
+    "kind": "district",
+    "latitude": 55.61433,
+    "longitude": 37.60539
+  },
+  {
+    "id": "moscow-138",
+    "label": "Москва, Чертаново Южное",
+    "kind": "district",
+    "latitude": 55.58826,
+    "longitude": 37.60293
+  },
+  {
+    "id": "moscow-231",
+    "label": "Москва, Щукино",
+    "kind": "district",
+    "latitude": 55.80155,
+    "longitude": 37.47482
+  },
+  {
+    "id": "moscow-205",
+    "label": "Москва, Южное Бутово",
+    "kind": "district",
+    "latitude": 55.52581,
+    "longitude": 37.53975
+  },
+  {
+    "id": "moscow-212",
+    "label": "Москва, Южное Медведково",
+    "kind": "district",
+    "latitude": 55.87355,
+    "longitude": 37.63645
+  },
+  {
+    "id": "moscow-218",
+    "label": "Москва, Южное Тушино",
+    "kind": "district",
+    "latitude": 55.84237,
+    "longitude": 37.43109
+  },
+  {
+    "id": "moscow-115",
+    "label": "Москва, Южнопортовый",
+    "kind": "district",
+    "latitude": 55.71106,
+    "longitude": 37.68048
+  },
+  {
+    "id": "moscow-119",
+    "label": "Москва, Якиманка",
+    "kind": "district",
+    "latitude": 55.73005,
+    "longitude": 37.60198
+  },
+  {
+    "id": "moscow-206",
+    "label": "Москва, Ярославский",
+    "kind": "district",
+    "latitude": 55.86211,
+    "longitude": 37.6988
+  },
+  {
+    "id": "moscow-137",
+    "label": "Москва, Ясенево",
+    "kind": "district",
+    "latitude": 55.61563,
+    "longitude": 37.53717
+  },
+  {
+    "id": "city-5f290be7-14ff-4ccd-8bc8-2871a9ca9d5f",
+    "label": "Мытищи",
+    "kind": "city",
+    "latitude": 55.91058,
+    "longitude": 37.73636
+  },
+  {
+    "id": "city-08c78435-6ed8-4d7f-a7ed-3f73e2fa6359",
+    "label": "Наро-Фоминск",
+    "kind": "city",
+    "latitude": 55.38618,
+    "longitude": 36.73448
+  },
+  {
+    "id": "city-40ae04e3-9a69-44ea-8bd7-6c6f08e1a4ca",
+    "label": "Ногинск",
+    "kind": "city",
+    "latitude": 55.86861,
+    "longitude": 38.46221
+  },
+  {
+    "id": "city-6ae8ad9e-aa6c-4849-92d8-8e637059c9b0",
+    "label": "Одинцово",
+    "kind": "city",
+    "latitude": 55.67895,
+    "longitude": 37.26369
+  },
+  {
+    "id": "city-e778b800-b432-4150-82fd-d415911fb700",
+    "label": "Озёры",
+    "kind": "city",
+    "latitude": 54.8541,
+    "longitude": 38.55992
+  },
+  {
+    "id": "city-0f2f2d09-8e7a-4356-bd4d-0b055d802e7b",
+    "label": "Орехово-Зуево",
+    "kind": "city",
+    "latitude": 55.81514,
+    "longitude": 38.98698
+  },
+  {
+    "id": "city-bb464d94-30bf-4cf8-a320-905733fa67e2",
+    "label": "Павловский Посад",
+    "kind": "city",
+    "latitude": 55.78072,
+    "longitude": 38.6597
+  },
+  {
+    "id": "city-ea80b93f-7a37-455e-a42c-33f13ab8bc06",
+    "label": "Пересвет",
+    "kind": "city",
+    "latitude": 56.41583,
+    "longitude": 38.17335
+  },
+  {
+    "id": "city-b22cf685-e391-42c8-aab5-a9aadb9193d4",
+    "label": "Подольск",
+    "kind": "city",
+    "latitude": 55.43893,
+    "longitude": 37.57035
+  },
+  {
+    "id": "city-9990bc45-c7c1-407e-bdd2-5526e4f742d2",
+    "label": "Протвино",
+    "kind": "city",
+    "latitude": 54.8706,
+    "longitude": 37.21827
+  },
+  {
+    "id": "city-7f22cfa4-34fa-4fa0-bcb0-620cd8402cfa",
+    "label": "Пушкино",
+    "kind": "city",
+    "latitude": 56.01036,
+    "longitude": 37.84714
+  },
+  {
+    "id": "city-49579edb-77cd-4967-9ef2-5530c4076067",
+    "label": "Пущино",
+    "kind": "city",
+    "latitude": 54.83244,
+    "longitude": 37.62103
+  },
+  {
+    "id": "city-a54506e0-5641-4d8c-b543-7bcce2c9887f",
+    "label": "Раменское",
+    "kind": "city",
+    "latitude": 55.54951,
+    "longitude": 38.27289
+  },
+  {
+    "id": "city-e0504cf6-4d81-401c-b18b-434457aaaa21",
+    "label": "Реутов",
+    "kind": "city",
+    "latitude": 55.75826,
+    "longitude": 37.86186
+  },
+  {
+    "id": "city-377ca4f0-3268-42b4-bf68-af98c3682503",
+    "label": "Рошаль",
+    "kind": "city",
+    "latitude": 55.66328,
+    "longitude": 39.86561
+  },
+  {
+    "id": "city-9e6c2327-d7ee-49b1-b36c-0bfc0eb5f145",
+    "label": "Руза",
+    "kind": "city",
+    "latitude": 55.70147,
+    "longitude": 36.19592
+  },
+  {
+    "id": "city-7baaac39-aa31-4712-893d-51ef80124a86",
+    "label": "Сергиев Посад",
+    "kind": "city",
+    "latitude": 56.30625,
+    "longitude": 38.15027
+  },
+  {
+    "id": "city-efc02a6a-273b-4a49-aef9-a5606ef8591c",
+    "label": "Серпухов",
+    "kind": "city",
+    "latitude": 54.92265,
+    "longitude": 37.40339
+  },
+  {
+    "id": "city-d4dadcfd-355d-4fe9-963d-48ad122a7778",
+    "label": "Солнечногорск",
+    "kind": "city",
+    "latitude": 56.1851,
+    "longitude": 36.97763
+  },
+  {
+    "id": "city-d49d936b-188f-4186-b2db-47e4b36682d6",
+    "label": "Старая Купавна",
+    "kind": "city",
+    "latitude": 55.81065,
+    "longitude": 38.17562
+  },
+  {
+    "id": "city-f516f0a9-3882-42fb-ae68-87a433e83e06",
+    "label": "Ступино",
+    "kind": "city",
+    "latitude": 54.88627,
+    "longitude": 38.07823
+  },
+  {
+    "id": "city-5f2757f9-6cb1-41a6-9610-ee4f73a2f803",
+    "label": "Талдом",
+    "kind": "city",
+    "latitude": 56.73086,
+    "longitude": 37.5276
+  },
+  {
+    "id": "city-troitsk",
+    "label": "Троицк",
+    "kind": "city",
+    "latitude": 55.484,
+    "longitude": 37.305,
+    "aliases": [
+      "Москва Троицк"
+    ]
+  },
+  {
+    "id": "city-13696e0e-4c75-49aa-9c83-0a6faf5074ee",
+    "label": "Фрязино",
+    "kind": "city",
+    "latitude": 55.95906,
+    "longitude": 38.04102
+  },
+  {
+    "id": "city-d76255c8-3173-4db5-a39b-badd3ebdf851",
+    "label": "Химки",
+    "kind": "city",
+    "latitude": 55.88866,
+    "longitude": 37.43037
+  },
+  {
+    "id": "city-6cdcecfe-4d41-426c-bac4-034348f7068b",
+    "label": "Хотьково",
+    "kind": "city",
+    "latitude": 56.2517,
+    "longitude": 37.9396
+  },
+  {
+    "id": "city-70c5b1c8-43ec-471f-b3df-fd6f60557332",
+    "label": "Черноголовка",
+    "kind": "city",
+    "latitude": 56.01,
+    "longitude": 38.37924
+  },
+  {
+    "id": "city-7eeb876e-7b67-4ed7-91ec-0588712db96c",
+    "label": "Чехов",
+    "kind": "city",
+    "latitude": 55.1508,
+    "longitude": 37.45333
+  },
+  {
+    "id": "city-cd6486b7-fd7a-4da8-b7f3-420d6e16b07b",
+    "label": "Шатура",
+    "kind": "city",
+    "latitude": 55.57774,
+    "longitude": 39.54457
+  },
+  {
+    "id": "city-c38a33c1-8f16-4454-bbf4-656d6b8b1739",
+    "label": "Щёлково",
+    "kind": "city",
+    "latitude": 55.92338,
+    "longitude": 37.97837
+  },
+  {
+    "id": "city-shcherbinka",
+    "label": "Щербинка",
+    "kind": "city",
+    "latitude": 55.5097,
+    "longitude": 37.5597,
+    "aliases": [
+      "Москва Щербинка"
+    ]
+  },
+  {
+    "id": "city-091e36e6-fab6-477b-8b07-9151cbeb9cd5",
+    "label": "Электрогорск",
+    "kind": "city",
+    "latitude": 55.87802,
+    "longitude": 38.78068
+  },
+  {
+    "id": "city-e0b171b6-bf2e-4d68-ab05-4d42ab2b375a",
+    "label": "Электросталь",
+    "kind": "city",
+    "latitude": 55.78473,
+    "longitude": 38.4447
+  },
+  {
+    "id": "city-27fda454-386e-4618-8c08-4e639a0a8bc1",
+    "label": "Электроугли",
+    "kind": "city",
+    "latitude": 55.71709,
+    "longitude": 38.21926
+  },
+  {
+    "id": "city-4e503ad8-0372-4434-888c-f111ed78040c",
+    "label": "Яхрома",
+    "kind": "city",
+    "latitude": 56.28905,
+    "longitude": 37.48318
+  }
+]

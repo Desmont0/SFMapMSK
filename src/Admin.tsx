@@ -1,0 +1,70 @@
+import { useEffect, useState, type FormEvent } from 'react';
+import { compactDecrypt, importJWK, SignJWT } from 'jose';
+import { api } from './api';
+import { Avatar, Card } from './Card';
+import { LocationPicker } from './LocationPicker';
+import { locationById } from '../shared/locations';
+import { matchesPlate } from '../shared/plate';
+import { emptyParticipant, fieldLabels, participantSchema, type AvatarState, type Participant, type ParticipantInput } from '../shared/participant';
+type AdminParticipant = Participant & { avatar: string | null; avatarState: AvatarState };
+const avatarMessages: Record<AvatarState['status'], string> = {
+  idle: 'Фото ещё не проверено.',
+  loading: 'Проверяем публичное фото Telegram…',
+  ready: 'Фото загружено.',
+  unavailable: 'Публичное фото недоступно. На карте показываются инициалы.',
+  error: 'Не удалось обновить фото. Повторим автоматически через 15 минут.',
+};
+type List={participants:AdminParticipant[];errors:{row:number;message:string}[];syncedAt:string|null;source:string;error:string|null};
+export default function Admin(){
+  const [csrf,setCsrf]=useState(''),[loading,setLoading]=useState(true),[password,setPassword]=useState(''),[file,setFile]=useState<File|null>(null),[error,setError]=useState(''),[busy,setBusy]=useState(false);
+  useEffect(()=>{api('/admin/session').then(s=>setCsrf(s.csrf)).catch(()=>{}).finally(()=>setLoading(false));},[]);
+  async function login(e:FormEvent){e.preventDefault();if(!file)return;setBusy(true);setError('');
+    try{
+      if(file.size>16384)throw new Error('Файл-ключ слишком большой');
+      const decrypted=await compactDecrypt((await file.text()).trim(),new TextEncoder().encode(password),{keyManagementAlgorithms:['PBES2-HS512+A256KW'],contentEncryptionAlgorithms:['A256GCM'],maxPBES2Count:300000});
+      const jwk=JSON.parse(new TextDecoder().decode(decrypted.plaintext));const key=await importJWK(jwk,'EdDSA');
+      const challenge=await api('/admin/challenge',{method:'POST',body:JSON.stringify({path:location.pathname})});
+      const proof=await new SignJWT({nonce:challenge.nonce}).setProtectedHeader({alg:'EdDSA',typ:'JWT'}).setIssuer(jwk.kid).setAudience('sfmap-admin').setJti(challenge.id).setIssuedAt().setExpirationTime('2m').sign(key);
+      const result=await api('/admin/login',{method:'POST',body:JSON.stringify({path:location.pathname,password,proof})});
+      decrypted.plaintext.fill(0);setPassword('');setFile(null);setCsrf(result.csrf);
+    }catch(e){setError(e instanceof Error&&'status' in e?e.message:'Не удалось открыть файл-ключ. Проверьте пароль и выбранный файл.');}finally{setPassword('');setBusy(false);}
+  }
+  if(loading)return <div className="page-loading">Проверка доступа…</div>;
+  if(csrf)return <Editor csrf={csrf} onLogout={()=>setCsrf('')}/>;
+  return <main className="login-page"><div className="login-decoration"><span>SF</span><div>СВОИ НА КАРТЕ<small>МОСКВА И МОСКОВСКАЯ ОБЛАСТЬ</small></div></div><form className="login-panel" onSubmit={login}><span className="eyebrow">SFMAP / УПРАВЛЕНИЕ</span><h1>Доступ для своих.</h1><p className="muted">Файл-ключ и пароль открывают доступ к участникам сообщества.</p><label>Файл-ключ<input type="file" accept=".jwe" required onChange={e=>setFile(e.target.files?.[0]||null)}/></label><label>Пароль<input type="password" autoComplete="current-password" required value={password} onChange={e=>setPassword(e.target.value)}/></label>{error&&<p className="error" role="alert">{error}</p>}<button className="primary" disabled={busy}>{busy?'Проверяем ключ…':'Войти в управление'}<span>→</span></button><p className="login-note">Ключ расшифровывается в этом браузере. Сессия действует до 8 часов.</p></form></main>;
+}
+function Editor({csrf,onLogout}:{csrf:string;onLogout:()=>void}){
+  const [list,setList]=useState<List|null>(null),[search,setSearch]=useState(''),[selected,setSelected]=useState<Participant|null>(null),[form,setForm]=useState<ParticipantInput>({...emptyParticipant}),[error,setError]=useState(''),[notice,setNotice]=useState(''),[busy,setBusy]=useState(false),[confirmDelete,setConfirmDelete]=useState(false);
+  const headers={'x-csrf-token':csrf};
+  async function load(refresh=false){try{const result:List=await api(refresh?'/admin/refresh':'/admin/participants',refresh?{method:'POST',headers,body:'{}'}:{});setList(result);if(result.error)setError(result.error);}catch(e){if((e as any).status===401)onLogout();setError((e as Error).message);}}
+  useEffect(()=>{void load();const timer=setInterval(()=>void load(),15000);return()=>clearInterval(timer);},[]);
+  const dirty=JSON.stringify(form)!==JSON.stringify(selected?participantSchema.parse(selected):emptyParticipant);
+  function choose(p:Participant|null){if(dirty&&!window.confirm('Есть несохранённые изменения. Перейти к другой записи?'))return;setSelected(p);setForm(p?participantSchema.parse(p):{...emptyParticipant});setError('');setNotice('');setConfirmDelete(false);}
+  function change(key:keyof ParticipantInput,value:string|number){setForm(f=>({...f,[key]:value}));setNotice('');}
+  async function save(e:FormEvent){e.preventDefault();setError('');setNotice('');setBusy(true);try{
+    const result=participantSchema.safeParse(form);if(!result.success)throw new Error(result.error.issues.map(i=>(fieldLabels[String(i.path[0])]||String(i.path[0]))+': '+i.message).join('; '));
+    const saved=await api<AdminParticipant>('/admin/participants'+(selected?'/'+selected.id:''),{method:selected?'PUT':'POST',headers,body:JSON.stringify({...result.data,revision:selected?.revision})});
+    setSelected(saved);setForm(participantSchema.parse(saved));setNotice('Сохранено в локальную базу SQLite');await load();
+  }catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  async function remove(){if(!selected)return;setBusy(true);setError('');try{await api('/admin/participants/'+selected.id,{method:'DELETE',headers,body:JSON.stringify({revision:selected.revision})});setSelected(null);setForm({...emptyParticipant});setConfirmDelete(false);setNotice('Участник удалён');await load();}catch(e){setError((e as Error).message);}finally{setBusy(false);}}
+  const previewParticipant=list?.participants.find(p=>p.id===selected?.id&&p.telegram.toLowerCase()===form.telegram.trim().replace(/\/$/,'').toLowerCase());
+  async function refreshPhoto(){
+    if(!selected)return;
+    try{
+      const result=await api<{avatarState:AvatarState}>('/admin/participants/'+selected.id+'/avatar/refresh',{method:'POST',headers,body:'{}'});
+      setList(current=>current&&({...current,participants:current.participants.map(p=>p.id===selected.id?{...p,avatarState:result.avatarState}:p)}));
+    }catch(e){setError((e as Error).message);}
+  }
+  const filtered=list?.participants.filter(p=>(p.name+' '+p.city+' '+p.plate+' '+p.telegram).toLowerCase().includes(search.toLowerCase())||matchesPlate(p.plate,search))||[];
+  return <main className="admin"><header className="admin-header"><a href="/" className="admin-logo">SF<span>MAP</span><i/></a><span className="admin-label">Управление сообществом</span><div className="admin-actions"><span className="mode-pill">SQLite</span><button className="text-button" onClick={async()=>{await api('/admin/logout',{method:'POST',headers,body:'{}'});onLogout();}}>Выйти ↗</button></div></header>
+    <aside className="participant-list"><div className="list-heading"><h1>Участники <span>{list?.participants.length??'—'}</span></h1><button className="add-button" onClick={()=>choose(null)} aria-label="Добавить участника">+</button></div><input className="search" aria-label="Поиск участников" placeholder="Имя, город или госномер" value={search} onChange={e=>setSearch(e.target.value)}/><div className="list-items">{filtered.map(p=><button key={p.id} className={'list-item '+(selected?.id===p.id?'active':'')} onClick={()=>choose(p)}><Avatar participant={p}/><span><b>{p.name}</b><small>{p.city} {p.plate?'· '+p.plate:''}</small></span><i>↗</i></button>)}{list&&filtered.length===0&&<p className="empty">Участников пока нет</p>}</div><footer className="list-footer"><span>{list?.syncedAt?'Обновлено '+new Date(list.syncedAt).toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',timeZone:'Europe/Moscow'}):'Нет снимка данных'}</span><button className="text-button" onClick={()=>void load(true)}>Обновить ↻</button></footer></aside>
+    <section className="editor"><div className="editor-heading"><span className="eyebrow">КАРТОТЕКА СООБЩЕСТВА</span><h1>{selected?'Редактирование участника':'Новый участник'}</h1><p className="muted">{selected?'Изменения появятся на открытой карте автоматически.':'Обязательные поля отмечены звёздочкой.'}</p></div>{list?.errors.length? <details className="row-errors"><summary>Ошибки в строках таблицы: {list.errors.length}</summary>{list.errors.map(e=><p key={e.row}>Строка {e.row}: {e.message}</p>)}</details>:null}
+    <form onSubmit={save}><div className="form-section"><h2><span>01</span>Участник</h2><div className="form-grid">{(['name','telegram'] as const).map(key=><label key={key} className={key==='telegram'?'wide':''}>{fieldLabels[key]} *<input required value={form[key]} placeholder={key==='telegram'?'https://t.me/username':''} onChange={e=>change(key,e.target.value)}/></label>)}</div></div>
+    <div className="form-section"><h2><span>02</span>Автомобиль</h2><div className="form-grid">{(['plate','color','year','engine'] as const).map(key=><label key={key}>{fieldLabels[key]}<input value={form[key]} inputMode={key==='year'?'numeric':undefined} placeholder={key==='engine'?'Например, 2.0':''} onChange={e=>change(key,e.target.value)}/></label>)}{(['generation','transmission','aspiration','steering'] as const).map(key=><label key={key}>{fieldLabels[key]}<select value={form[key]} onChange={e=>change(key,e.target.value)}>{(key==='generation'?['','Рест','Дорест']:key==='transmission'?['','МКПП','АКПП','Робот','Вариатор']:key==='aspiration'?['','Атмо','Турбо']:['','Левый','Правый']).map(v=><option key={v} value={v}>{v||'Не указан'}</option>)}</select></label>)}</div><label>Комментарий для карты<textarea rows={3} maxLength={1000} value={form.comment} onChange={e=>change('comment',e.target.value)} placeholder="Будет виден всем посетителям"/></label></div>
+    <div className="form-section"><h2><span>03</span>Район или город</h2><LocationPicker key={selected?.id||"new"} value={form.locationId} onChange={id=>{const place=locationById.get(id);setForm(f=>({...f,locationId:id,city:place?.label||"",latitude:place?.latitude||0,longitude:place?.longitude||0}));setNotice("");}}/></div>
+    <div className="form-section private-section"><h2><span>04</span>Только для администратора <i>ЗАКРЫТО</i></h2><label>Внутренний комментарий<textarea rows={3} maxLength={2000} value={form.adminComment} onChange={e=>change('adminComment',e.target.value)}/></label><p className="field-hint">Этот комментарий доступен только в админке.</p></div>
+    {error&&<p className="error" role="alert">{error}</p>}{notice&&<p className="notice" role="status">{notice}</p>}<div className="save-bar"><button className="primary" disabled={busy}>{busy?'Сохраняем…':selected?'Сохранить изменения':'Добавить участника'}<span>↗</span></button>{selected&&<button type="button" className="danger-button" onClick={()=>setConfirmDelete(true)} disabled={busy}>Удалить</button>}</div></form></section>
+    <aside className="preview-column"><span className="eyebrow">ПУБЛИЧНАЯ КАРТОЧКА</span><p className="muted">Так участника увидят на карте</p><Card participant={{...form,id:selected?.id||'preview',updatedAt:'',avatar:previewParticipant?.avatar||null}} preview/><p className="preview-note">Госномер и комментарий для карты открыты всем посетителям.</p>{selected&&<div className="avatar-status"><p aria-live="polite">{previewParticipant?avatarMessages[previewParticipant.avatarState.status]:'Сохраните ссылку Telegram, чтобы загрузить фото.'}</p><button type="button" className="secondary" disabled={busy||dirty||!previewParticipant||previewParticipant.avatarState.status==='loading'} onClick={()=>void refreshPhoto()}>Проверить фото ещё раз</button></div>}</aside>
+    {confirmDelete&&<div className="modal-backdrop"><div className="modal" role="dialog" aria-modal="true" aria-labelledby="delete-title"><span className="eyebrow">УДАЛЕНИЕ УЧАСТНИКА</span><h2 id="delete-title">Удалить {selected?.name}?</h2><p>Запись будет удалена из локальной базы и с публичной карты.</p><div><button className="secondary" onClick={()=>setConfirmDelete(false)}>Отмена</button><button className="danger-button" disabled={busy} onClick={()=>void remove()}>Удалить участника</button></div></div></div>}
+  </main>;
+}
