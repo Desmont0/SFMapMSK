@@ -79,7 +79,7 @@ jobs:
           curl --fail --silent --show-error http://127.0.0.1:18080/api/health | grep -q '"source":"sqlite"'
           curl --fail --silent --show-error http://127.0.0.1:18080/api/participants | grep -q '"source":"sqlite"'
           test "$(curl --silent --output /dev/null --write-out '%{http_code}' http://127.0.0.1:18081/api/admin/session)" = 404
-          test -s secrets/admin-access.txt
+          docker compose exec -T sfmap test -s /app/secrets/admin-access.txt
       - name: Verify persistence after recreate
         shell: bash
         run: |
@@ -87,7 +87,7 @@ jobs:
           docker compose down
           docker compose up -d --wait --wait-timeout 120
           curl --fail --silent --show-error http://127.0.0.1:18080/api/health | grep -q '"source":"sqlite"'
-          test -s secrets/admin-access.txt
+          docker compose exec -T sfmap test -s /app/secrets/admin-access.txt
       - name: Cleanup
         if: always()
         run: docker compose down --volumes --remove-orphans
