@@ -228,7 +228,7 @@ log "Собираю SFMap."
 compose config --quiet || die 'Проверьте Compose. Для режима 4 нужен Compose >= 2.24.4 с поддержкой !reset.'
 compose build
 log "Подготавливаю права тома данных и каталога ключей."
-compose run --rm --no-deps --user 0 --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE --entrypoint /bin/sh sfmap -c "chown -R $CONTAINER_UID:$CONTAINER_GID /app/data /app/secrets"
+compose run --rm --no-deps -T --user 0 --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE --entrypoint /bin/sh sfmap -c "chown -R $CONTAINER_UID:$CONTAINER_GID /app/data /app/secrets"
 printf '%s\n' "$ADMIN_PASSWORD" | compose run --rm --no-deps -T sfmap npm run setup-admin -- --password-stdin
 unset ADMIN_PASSWORD ADMIN_PASSWORD_CONFIRM
 
