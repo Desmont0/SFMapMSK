@@ -12,8 +12,8 @@
     "start": "tsx server/index.ts",
     "db:migrate": "tsx scripts/migrate.ts",
     "setup-admin": "tsx scripts/setup-admin.ts",
-    "proxies:refresh": "tsx scripts/find-telegram-proxies.ts",
-    "check:telegram": "tsx scripts/check-telegram.ts",
+    "db:export": "tsx scripts/export.ts",
+    "map:cache": "tsx scripts/cache-map.ts",
     "test": "tsx --test tests/*.test.ts"
   },
   "dependencies": {
@@ -25,13 +25,11 @@
     "express": "^5.1.0",
     "express-rate-limit": "^8.2.1",
     "helmet": "^8.1.0",
-    "https-proxy-agent": "^9.1.0",
     "jose": "^6.1.0",
     "maplibre-gl": "^6.17.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "sharp": "^0.35.5",
-    "socks-proxy-agent": "^10.1.0",
     "tsx": "^4.23.15",
     "zod": "^4.1.12"
   },

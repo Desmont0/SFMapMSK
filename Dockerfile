@@ -22,7 +22,7 @@ COPY --chown=node:node shared ./shared
 COPY --chown=node:node public/geo ./public/geo
 COPY --chown=node:node scripts/setup-admin.ts ./scripts/setup-admin.ts
 COPY --chown=node:node scripts/migrate.ts ./scripts/migrate.ts
-COPY --chown=node:node scripts/find-telegram-proxies.ts scripts/check-telegram.ts ./scripts/
+COPY --chown=node:node scripts/export.ts scripts/cache-map.ts ./scripts/
 RUN mkdir -p /app/data /app/secrets && chown node:node /app/data /app/secrets
 USER node
 EXPOSE 3000 3001

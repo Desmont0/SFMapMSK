@@ -1,7 +1,8 @@
 import type { DatabaseSync } from 'node:sqlite';
 import { withoutPhone } from './privacy.ts';
+import { randomBytes } from 'node:crypto';
 
-export const SCHEMA_VERSION = 1;
+export const SCHEMA_VERSION = 2;
 const version = (db: DatabaseSync) => (db.prepare('PRAGMA user_version').get() as {user_version:number}).user_version;
 
 export function migrateDatabase(db: DatabaseSync) {
@@ -37,6 +38,18 @@ export function migrateDatabase(db: DatabaseSync) {
         if (scrubbed !== row.data) db.prepare('UPDATE participants SET data=? WHERE id=?').run(scrubbed, row.id);
       }
       db.exec('PRAGMA user_version=1');
+    }
+    if (current < 2) {
+      db.exec(`CREATE TABLE participant_links (participant_id TEXT PRIMARY KEY REFERENCES participants(id) ON DELETE CASCADE, share_id TEXT NOT NULL UNIQUE);
+        CREATE TABLE photos (participant_id TEXT PRIMARY KEY REFERENCES participants(id) ON DELETE CASCADE, data BLOB NOT NULL, version TEXT NOT NULL);`);
+      const insert = db.prepare('INSERT INTO participant_links(participant_id,share_id) VALUES(?,?)');
+      // Defaults are applied on read; preserve existing records and revisions during the upgrade.
+      for (const row of db.prepare('SELECT id FROM participants').all() as {id:string}[]) {
+        let shareId: string;
+        do { shareId = randomBytes(6).toString('base64url'); } while (db.prepare('SELECT 1 FROM participant_links WHERE share_id=?').get(shareId));
+        insert.run(row.id, shareId);
+      }
+      db.exec('PRAGMA user_version=2');
     }
     db.exec('COMMIT');
   } catch (error) { db.exec('ROLLBACK'); throw error; }

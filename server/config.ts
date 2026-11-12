@@ -15,15 +15,8 @@ export const config = {
   tlsCert: process.env.TLS_CERT_FILE || '',
   tlsKey: process.env.TLS_KEY_FILE || '',
   secretDir: path.resolve(process.env.SECRETS_DIR || 'secrets'),
-  telegramTransport: process.env.TELEGRAM_TRANSPORT || 'proxy',
-  telegramProxyMode: process.env.TELEGRAM_PROXY_MODE || 'external',
-  telegramProxyUrls: process.env.TELEGRAM_PROXY_URLS || '',
-  telegramProxyFile: path.resolve(process.env.TELEGRAM_PROXY_FILE || path.join(process.env.DATA_DIR || 'data','telegram-proxies.json')),
-  telegramLocalProxyUrl: process.env.TELEGRAM_LOCAL_PROXY_URL || '',
   adminAllowIps,
 };
-if (!['proxy','direct'].includes(config.telegramTransport)) throw new Error('TELEGRAM_TRANSPORT must be proxy or direct');
-if (!['external','local','auto'].includes(config.telegramProxyMode)) throw new Error('TELEGRAM_PROXY_MODE must be external, local or auto');
 if (!!config.tlsCert !== !!config.tlsKey) throw new Error('TLS_CERT_FILE and TLS_KEY_FILE must be set together');
 if (config.tlsCert && (!config.secure || !config.origin.startsWith('https://'))) throw new Error('TLS requires COOKIE_SECURE=true and an HTTPS PUBLIC_ORIGIN');
 const origin = new URL(config.origin);

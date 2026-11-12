@@ -9,6 +9,7 @@ import { pathToFileURL } from 'node:url';
 import { randomBytes } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import { compactDecrypt, importJWK, SignJWT, generateKeyPair } from 'jose';
+import sharp from 'sharp';
 import { emptyParticipant } from '../shared/participant.ts';
 const root=process.cwd();
 const tsx=pathToFileURL(path.join(root,'node_modules/tsx/dist/loader.mjs')).href;
@@ -20,7 +21,7 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
   let sharePort=await freePort();while(sharePort===port)sharePort=await freePort();
   const shareOrigin='http://127.0.0.1:'+sharePort;
   const password=randomBytes(24).toString('base64url');
-  const env={...process.env,DATA_DIR:path.join(temp,'data'),SECRETS_DIR:path.join(temp,'secrets'),HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:origin,SHARE_PORT:String(sharePort),SHARE_HOST:'127.0.0.1',SFMAP_ADMIN_PASSWORD:password,TELEGRAM_TRANSPORT:'proxy',TELEGRAM_PROXY_MODE:'external',TELEGRAM_PROXY_URLS:'',TELEGRAM_PROXY_FILE:path.join(temp,'missing-proxies.json'),COOKIE_SECURE:'false'};
+  const env={...process.env,DATA_DIR:path.join(temp,'data'),SECRETS_DIR:path.join(temp,'secrets'),HOST:'127.0.0.1',PORT:String(port),PUBLIC_ORIGIN:origin,SHARE_PORT:String(sharePort),SHARE_HOST:'127.0.0.1',SFMAP_ADMIN_PASSWORD:password,COOKIE_SECURE:'false',MAP_CACHE_AUTO:'false'};
   function setup(){const r=spawnSync(process.execPath,['--import',tsx,path.join(root,'scripts/setup-admin.ts')],{cwd:temp,env,encoding:'utf8'});assert.equal(r.status,0,r.stderr);}
   setup();
   async function access(){const text=await readFile(path.join(temp,'secrets/admin-access.txt'),'utf8');return {adminPath:new URL(text.match(/Адрес: (.+)/)![1]).pathname,keyPath:text.match(/Файл-ключ: (.+)/)![1].trim()};}
@@ -56,30 +57,40 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
     const headers={cookie:session.cookie,'x-csrf-token':session.csrf};
     assert.equal((await fetch(shareOrigin+'/api/admin/participants',{headers:{...headers,origin}})).status,404,'even a valid local admin session cannot use the public listener');
     const admin=await request('/admin/participants','GET',undefined,headers);assert.equal(admin.body.source,'sqlite');assert.deepEqual(admin.body.participants,[]);
-    const input={...emptyParticipant,locationId:'moscow-137',name:'Тест безопасности',city:'Москва',telegram:'https://t.me/sfmap_test',plate:'00123',phone:'+7 111 222-33-44',comment:'<img src=x onerror=alert(1)>',adminComment:'DO-NOT-PUBLISH'};
+    const input={...emptyParticipant,locationId:'moscow-137',name:'Тест безопасности',city:'Москва',telegram:'https://t.me/sfmap_test',plate:'00123',sunroof:'Да' as const,phone:'+7 111 222-33-44',comment:'<img src=x onerror=alert(1)>',adminComment:'DO-NOT-PUBLISH'};
     assert.equal((await request('/admin/participants','POST',input,{cookie:session.cookie})).response.status,403,'CSRF missing');
     assert.equal((await request('/admin/participants','POST',input,{...headers,origin:'https://evil.example'})).response.status,403,'wrong origin');
     assert.equal((await request('/admin/participants','POST',{...input,locationId:'unknown'},headers)).response.status,400,'unknown location rejected');
     const created=await request('/admin/participants','POST',{...input,city:'Precise address',latitude:59.93,longitude:30.31},headers);assert.equal(created.response.status,201,JSON.stringify(created.body));assert.equal(created.body.plate,'00123');assert.equal(created.body.city,'Москва, Ясенево');assert.equal(created.body.latitude,55.61563);assert.equal(created.body.longitude,37.53717);
     const id=created.body.id;
-    assert.equal((await request('/admin/participants/'+id+'/avatar/refresh','POST',{}, {cookie:session.cookie})).response.status,403,'avatar refresh requires CSRF');
-    assert.equal((await request('/admin/participants/'+id+'/avatar/refresh','POST',{},headers)).response.status,202);
-    assert.equal((await fetch(shareOrigin+'/api/admin/participants/'+id+'/avatar/refresh',{method:'POST',headers:{...headers,origin}})).status,404);
+    assert.equal((await fetch(origin+'/api/admin/participants/'+id+'/photo',{method:'PUT',headers:{origin,'content-type':'application/octet-stream',cookie:session.cookie},body:Buffer.from('not-an-image')})).status,403,'photo upload requires CSRF');
+    const sourcePng=Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII=','base64');
+    const photoResponse=await fetch(origin+'/api/admin/participants/'+id+'/photo',{method:'PUT',headers:{origin,'content-type':'application/octet-stream',cookie:session.cookie,'x-csrf-token':session.csrf},body:sourcePng});
+    assert.equal(photoResponse.status,200);
+    const photoBody=await photoResponse.json() as {avatar:string}; assert.match(photoBody.avatar,/^\/photos\//);
+    const photoData=Buffer.from(await (await fetch(origin+photoBody.avatar)).arrayBuffer());
+    assert.equal((await sharp(photoData).metadata()).format,'webp');
+    assert.ok(photoData.length<sourcePng.length+5000);
     const photoCheck=await request('/admin/participants','GET',undefined,headers);
     const checkedParticipant=photoCheck.body.participants.find((p:any)=>p.id===id);
-    assert.equal(checkedParticipant.revision,created.body.revision,'avatar checks do not edit participant data');
-    assert.ok(['loading','error'].includes(checkedParticipant.avatarState.status));
+    assert.equal(checkedParticipant.avatar,photoBody.avatar);
     assert.equal('phone' in created.body,false,'legacy phone input is discarded');
     {const sql=new DatabaseSync(path.join(temp,'data/sfmap.sqlite'),{readOnly:true});try{const row=sql.prepare('SELECT data FROM participants WHERE id=?').get(id) as {data:string};assert.equal(row.data.includes(input.phone),false,'phone is never persisted');assert.equal(JSON.parse(row.data).adminComment,input.adminComment);}finally{sql.close();}}
     const privateRecord=(await request('/admin/participants','GET',undefined,headers)).body.participants.find((p:any)=>p.id===id);
     assert.equal(privateRecord.telegram,input.telegram);assert.equal(privateRecord.adminComment,input.adminComment);
     const publicAfter=await request('/participants');const visible=publicAfter.body.participants.find((p:any)=>p.id===id);assert.equal(visible.comment,input.comment);assert.equal(visible.plate,'00123');assert.equal(JSON.stringify(publicAfter.body).includes('DO-NOT-PUBLISH'),false);assert.equal(JSON.stringify(publicAfter.body).includes(input.phone),false);
-    assert.equal('telegram' in visible,false);assert.equal('avatarState' in visible,false);assert.equal(JSON.stringify(publicAfter.body).includes(input.telegram),false);
+    assert.equal('telegram' in visible,false);assert.equal(JSON.stringify(publicAfter.body).includes(input.telegram),false);assert.equal(visible.avatar,photoBody.avatar);
+    assert.equal((await fetch(shareOrigin+'/p/'+created.body.shareId)).status,200,'short link serves the public app');
+    const linked=await (await fetch(shareOrigin+'/api/participants/'+created.body.shareId)).json() as any; assert.equal(linked.id,id);assert.equal(linked.sunroof,'Да');
+    const exported=await fetch(origin+'/api/admin/export.txt',{headers:{origin,...headers}});assert.equal(exported.status,200);const exportText=await exported.text();assert.match(exportText,/Тест безопасности/);assert.match(exportText,/Фото WebP \(base64\): [A-Za-z0-9+/=]+/);
+    const garage=await request('/admin/participants','POST',{...emptyParticipant,kind:'garage',name:'Гараж тест',locationId:'moscow-137',address:'Тестовый адрес',latitude:55.61,longitude:37.53},headers);assert.equal(garage.response.status,201);assert.equal(garage.body.kind,'garage');assert.equal(garage.body.plate,'');
+    assert.equal((await request('/admin/participants/'+id+'/photo','DELETE',{},headers)).response.status,200);
     const edited=await request('/admin/participants/'+id,'PUT',{...input,name:'Изменённый',revision:created.body.revision},headers);assert.equal(edited.response.status,200);
     assert.equal((await request('/admin/participants/'+id,'PUT',{...input,revision:created.body.revision},headers)).response.status,409,'stale revision rejected');
     assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:created.body.revision},headers)).response.status,409);
     const audit=await request('/admin/audit','GET',undefined,headers);assert.equal(JSON.stringify(audit.body).includes('DO-NOT-PUBLISH'),false);assert.equal(JSON.stringify(audit.body).includes(password),false);
     await stop();await start();assert.ok((await request('/participants')).body.participants.some((p:any)=>p.id===id),'participant survives restart');
+    assert.equal((await request('/admin/participants','GET',undefined,headers)).body.participants.find((p:any)=>p.id===id).avatar,null,'photo deletion survives restart');
     assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:edited.body.revision},headers)).response.status,200);
     assert.equal((await request('/participants')).body.participants.some((p:any)=>p.id===id),false);
     {const sql=new DatabaseSync(path.join(temp,'data/sfmap.sqlite'));sql.prepare('UPDATE sessions SET expires=?').run(Date.now()-1000);sql.close();}

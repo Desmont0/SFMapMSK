@@ -4,7 +4,7 @@ import { type GeoJSONSource, type StyleSpecification } from 'maplibre-gl';
 import workerUrl from 'maplibre-gl/dist/maplibre-gl-worker.mjs?url';
 import { difference } from '@turf/difference';
 import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson';
-import { initials, type PublicParticipant } from '../shared/participant';
+import { initials, kindIcons, kindLabels, type PublicParticipant } from '../shared/participant';
 import { Avatar, Card, avatarHue } from './Card';
 maplibregl.setWorkerUrl(workerUrl);
 
@@ -28,10 +28,10 @@ const compareParticipants = (a: PublicParticipant, b: PublicParticipant) =>
   a.city.localeCompare(b.city, 'ru') || a.name.localeCompare(b.name, 'ru') || a.id.localeCompare(b.id);
 function markerElement(p: PublicParticipant) {
   const button = document.createElement('button');
-  button.className = 'map-avatar'; button.type = 'button'; button.title = p.name + ' · ' + p.city;
+  button.className = 'map-avatar kind-'+p.kind; button.type = 'button'; button.title = kindLabels[p.kind]+' · '+p.name+' · '+p.city;
   button.setAttribute('aria-label', 'Открыть: ' + p.name + ', ' + p.city);
   button.style.setProperty('--avatar-hue', String(avatarHue(p.name)));
-  const label = document.createElement('span'); label.textContent = initials(p.name || 'Участник'); button.append(label);
+  const label = document.createElement('span'); label.textContent = kindIcons[p.kind] || initials(p.name || 'Участник'); button.append(label);
   if (p.avatar) { const img = document.createElement('img'); img.src = p.avatar; img.alt = ''; img.onerror = () => img.remove(); button.append(img); }
   return button;
 }
@@ -41,12 +41,12 @@ function clusterElement(pointCount: number, leaves: PublicParticipant[]) {
   button.setAttribute('aria-label', 'Открыть группу: ' + pointCount + ' участников');
   const stack = document.createElement('span'); stack.className = 'cluster-stack';
   leaves.slice(0, 3).forEach((p, index) => {
-    const avatar = document.createElement('span'); avatar.className = 'cluster-avatar';
+    const avatar = document.createElement('span'); avatar.className = 'cluster-avatar kind-'+p.kind;
     avatar.style.setProperty('--stack-index', String(index));
     avatar.style.setProperty('--avatar-hue', String(avatarHue(p.name)));
     const label = document.createElement('span');
     label.className = 'cluster-initials';
-    label.textContent = initials(p.name || 'Участник');
+    label.textContent = kindIcons[p.kind] || initials(p.name || 'Участник');
     avatar.append(label);
     if (index === 0) {
       const count = document.createElement('span');
@@ -71,15 +71,25 @@ export default function MapView({ participants, theme, focus }: Props) {
   const [selected, setSelected] = useState<string | null>(null), [group, setGroup] = useState<string[]>([]);
   const [ready, setReady] = useState(false), [error, setError] = useState('');
   const [zoom, setZoom] = useState(view.current.zoom);
+  const [attempt,setAttempt]=useState(0);
   data.current = participants;
   useEffect(() => {
     let disposed = false; setReady(false); setError('');
     const controller = new AbortController();
     async function create() {
       try {
-        const [styleResponse, regionResponse] = await Promise.all([fetch('https://tiles.openfreemap.org/styles/' + (theme === 'light' ? 'positron' : 'dark'), {signal: controller.signal}), fetch('/geo/region.geojson', {signal: controller.signal})]);
+        const [styleResponse, regionResponse] = await Promise.all([fetch('/map-cache/styles/' + (theme === 'light' ? 'positron' : 'dark'), {signal: controller.signal}), fetch('/geo/region.geojson', {signal: controller.signal})]);
         if (!styleResponse.ok || !regionResponse.ok) throw new Error('Не удалось загрузить карту');
         const style: StyleSpecification = await styleResponse.json();
+        // MapLibre resolves template URLs itself; make cached dependencies absolute for both / and /p/:id.
+        const absolute=(url:string)=>new URL(url,location.origin).href;
+        if(typeof style.sprite==='string')style.sprite=absolute(style.sprite);
+        if(style.glyphs)style.glyphs=absolute(style.glyphs);
+        for(const source of Object.values(style.sources)){
+          if('url' in source&&typeof source.url==='string')source.url=absolute(source.url);
+          if('tiles' in source&&source.tiles)source.tiles=source.tiles.map(absolute);
+          if('bounds' in source)source.bounds=[34.7,54.1,41,57.2];
+        }
         enhanceRoadContrast(style, theme);
         const region: FeatureCollection<Polygon | MultiPolygon> = await regionResponse.json();
         for (const layer of style.layers) {
@@ -111,7 +121,8 @@ export default function MapView({ participants, theme, focus }: Props) {
     }
     void create();
     return () => { disposed=true; controller.abort(); const m=map.current; if(m) view.current={center:[m.getCenter().lng,m.getCenter().lat],zoom:m.getZoom()}; markers.current.forEach(marker=>marker.remove()); markers.current=[]; m?.remove(); map.current=null; };
-  }, [theme]);
+  }, [theme,attempt]);
+  useEffect(()=>{if(!error||ready)return;const timeout=setTimeout(()=>setAttempt(v=>v+1),15000);return()=>clearTimeout(timeout);},[error,ready]);
   useEffect(() => {
     const m=map.current; if (!ready || !m || !m.getSource('people')) return;
     const source=m.getSource('people') as GeoJSONSource;
@@ -162,7 +173,7 @@ export default function MapView({ participants, theme, focus }: Props) {
     setGroup([]);setSelected(p.id);
     appliedFocus.current=focus.version;
     map.current?.easeTo({center:[p.longitude,p.latitude],zoom:Math.max(view.current.zoom,10.5),duration:500});
-  },[focus,ready]);
+  },[focus,ready,participants]);
   const p=participants.find(p=>p.id===selected);
   const members=participants.filter(p=>group.includes(p.id)).sort(compareParticipants);
   const places=new Set(members.map(p=>p.city));
@@ -176,7 +187,7 @@ export default function MapView({ participants, theme, focus }: Props) {
   }
   return <div className="map-shell"><div className="map-canvas" ref={container} data-zoom={view.current.zoom} aria-label="Карта участников Москвы и Московской области"/>
     {!ready&&!error&&<div className="map-loading"><span className="loading-ring"/>Загружаем карту</div>}
-    {error&&<div className="map-error" role="status">{error}</div>}
+    {error&&<div className="map-error" role="status">{error} <button className="text-button" onClick={()=>setAttempt(v=>v+1)}>Повторить</button></div>}
     <div className="zoom-controls" role="group" aria-label="Масштаб карты">
       <button type="button" aria-label="Приблизить карту" title="Приблизить" disabled={!ready||zoom>=DISTRICT_ZOOM-.001} onClick={()=>changeZoom((map.current?.getZoom()??zoom)+1,true)}>+</button>
       <input type="range" aria-label="Приближение карты" aria-orientation="vertical" aria-valuetext={zoom>=DISTRICT_ZOOM-.01?'Максимальное приближение: район':zoom<=MIN_ZOOM+.01?'Минимальное приближение: область':'Уровень приближения '+zoom.toFixed(1)} min={MIN_ZOOM} max={DISTRICT_ZOOM} step="0.01" value={zoom} disabled={!ready} onChange={e=>changeZoom(Number(e.target.value))}/>
@@ -184,8 +195,8 @@ export default function MapView({ participants, theme, focus }: Props) {
     </div>
     {members.length>0&&!p&&<section className="group-panel" aria-label="Участники группы"><button className="close" aria-label="Закрыть список" onClick={()=>setGroup([])}>×</button>
       <span className="eyebrow">СВОИ РЯДОМ · {members.length}</span><h2>{places.size===1 ? members[0].city : 'Участники в этой области'}</h2>
-      <p className="group-hint">Выберите участника, чтобы открыть карточку</p><div className="group-members">{members.map(p=><button key={p.id} onClick={()=>setSelected(p.id)}><Avatar participant={p}/><span><b>{p.name}</b><small>{p.city}</small><em>{p.plate||'Госномер не указан'}</em></span><i>↗</i></button>)}</div>
+      <p className="group-hint">Выберите запись, чтобы открыть карточку</p><div className="group-members">{members.map(p=><button key={p.id} onClick={()=>setSelected(p.id)}><Avatar participant={p}/><span><b>{p.name}</b><small>{p.city}</small><em>{p.kind==='person'?(p.plate||'Госномер не указан'):kindLabels[p.kind]}</em></span><i>↗</i></button>)}</div>
     </section>}
-    {p&&<><Card participant={p} onClose={()=>setSelected(null)}/>{members.length>0&&<button className="back-to-group" onClick={()=>setSelected(null)}>← К списку участников</button>}</>}
+    {p&&<><Card key={p.id} participant={p} onClose={()=>setSelected(null)}/>{members.length>0&&<button className="back-to-group" onClick={()=>setSelected(null)}>← К списку</button>}</>}
   </div>;
 }

@@ -57,9 +57,7 @@ jobs:
           SFMAP_UID=1000
           SFMAP_GID=1000
           COOKIE_SECURE=false
-          TELEGRAM_TRANSPORT=proxy
-          TELEGRAM_PROXY_MODE=external
-          TELEGRAM_PROXY_FILE=./data/telegram-proxies.json
+          MAP_CACHE_AUTO=false
           EOF
           chmod 600 .env
       - name: Build image

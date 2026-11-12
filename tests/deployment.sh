@@ -11,7 +11,7 @@ git remote set-url origin "$TMP/origin.git"
 BASE=$(git rev-parse HEAD)
 # Seed real records through the production repository, then simulate an unversioned legacy database.
 docker compose stop sfmap
-docker compose run --rm --no-deps -T sfmap node --import tsx --input-type=module -e "import {Repository} from './server/repository.ts'; import {db} from './server/db.ts'; import {emptyParticipant} from './shared/participant.ts'; const r=new Repository(); await r.initialize(); await r.mutate('create',{...emptyParticipant,name:'Upgrade participant',locationId:'moscow-137',telegram:'https://t.me/sfmap_ci',plate:'А123АА 777',adminComment:'preserve private data'}); db.exec('PRAGMA user_version=0'); db.close();"
+docker compose run --rm --no-deps -T sfmap node --import tsx --input-type=module -e "import {Repository} from './server/repository.ts'; import {db} from './server/db.ts'; import {emptyParticipant} from './shared/participant.ts'; const r=new Repository(); await r.initialize(); await r.mutate('create',{...emptyParticipant,name:'Upgrade participant',locationId:'moscow-137',telegram:'https://t.me/sfmap_ci',plate:'А123АА 777',sunroof:'Да',adminComment:'preserve private data'}); db.exec('DROP TABLE photos; DROP TABLE participant_links; PRAGMA user_version=0'); db.close();"
 docker compose up -d --wait --wait-timeout 120
 docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); const rows=d.prepare('SELECT * FROM participants ORDER BY id').all(); if(rows.length!==1)throw Error('missing seed'); console.log(JSON.stringify(rows));" > "$TMP/before.json"
 # Successful fast-forward update from a local origin.
@@ -23,7 +23,7 @@ GOOD=$(git rev-parse HEAD)
 git reset --hard "$BASE"
 bash "$TMP/update.sh" "$ROOT"
 test "$(git rev-parse HEAD)" = "$GOOD"
-docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); if(d.prepare('PRAGMA user_version').get().user_version!==1)throw Error('migration not applied'); console.log(JSON.stringify(d.prepare('SELECT * FROM participants ORDER BY id').all()));" > "$TMP/after.json"
+docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); if(d.prepare('PRAGMA user_version').get().user_version!==2)throw Error('migration not applied'); if(d.prepare('SELECT count(*) AS n FROM participant_links').get().n!==1)throw Error('share link migration not applied'); console.log(JSON.stringify(d.prepare('SELECT * FROM participants ORDER BY id').all()));" > "$TMP/after.json"
 cmp "$TMP/before.json" "$TMP/after.json"
 # Failing migration actually changes data before throwing, proving backup restoration.
 cat > scripts/migrate.ts <<'EOF'
@@ -37,7 +37,7 @@ git push origin HEAD:main
 git reset --hard "$GOOD"
 if bash "$TMP/update.sh" "$ROOT"; then echo 'Failed migration unexpectedly succeeded' >&2; exit 1; fi
 test "$(git rev-parse HEAD)" = "$GOOD"
-docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); if(d.prepare('PRAGMA user_version').get().user_version!==1)throw Error('schema was not restored'); console.log(JSON.stringify(d.prepare('SELECT * FROM participants ORDER BY id').all()));" > "$TMP/restored.json"
+docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); if(d.prepare('PRAGMA user_version').get().user_version!==2)throw Error('schema was not restored'); console.log(JSON.stringify(d.prepare('SELECT * FROM participants ORDER BY id').all()));" > "$TMP/restored.json"
 cmp "$TMP/before.json" "$TMP/restored.json"
 curl -fsS http://127.0.0.1:18081/api/health | grep -q '"source":"sqlite"'
 # Exercise installer remote mode with native TLS and host networking.

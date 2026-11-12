@@ -19,11 +19,7 @@ services:
       ADMIN_ALLOW_IPS: ${ADMIN_ALLOW_IPS:-}
       TLS_CERT_FILE: ${TLS_CERT_FILE:-}
       TLS_KEY_FILE: ${TLS_KEY_FILE:-}
-      TELEGRAM_TRANSPORT: ${TELEGRAM_TRANSPORT:-proxy}
-      TELEGRAM_PROXY_MODE: ${TELEGRAM_PROXY_MODE:-external}
-      TELEGRAM_PROXY_FILE: /app/data/telegram-proxies.json
-      TELEGRAM_PROXY_URLS: ${TELEGRAM_PROXY_URLS:-}
-      TELEGRAM_LOCAL_PROXY_URL: ${TELEGRAM_LOCAL_PROXY_URL:-}
+      MAP_CACHE_AUTO: ${MAP_CACHE_AUTO:-true}
     volumes:
       - sfmap-data:/app/data
       - ./secrets:/app/secrets:rw
