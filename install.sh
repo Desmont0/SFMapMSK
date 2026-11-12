@@ -233,7 +233,11 @@ printf '%s\n' "$ADMIN_PASSWORD" | compose run --rm --no-deps -T sfmap npm run se
 unset ADMIN_PASSWORD ADMIN_PASSWORD_CONFIRM
 
 log "Запускаю SFMap и жду health-check."
-if ! compose up -d; then
+set +e
+compose up -d
+COMPOSE_START_STATUS=$?
+set -e
+if (( COMPOSE_START_STATUS != 0 )); then
   RUNNING_AFTER_START="$(compose ps --status running -q sfmap 2>/dev/null || true)"
   if [[ -z "$RUNNING_AFTER_START" ]]; then
     compose ps || true
