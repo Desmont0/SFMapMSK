@@ -8,3 +8,6 @@ secrets/
 *.key.jwe
 test-results/
 playwright-report/
+backups/
+.sfmap-update.lock
+.sfmap-volume.yaml

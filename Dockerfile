@@ -21,9 +21,10 @@ COPY --chown=node:node server ./server
 COPY --chown=node:node shared ./shared
 COPY --chown=node:node public/geo ./public/geo
 COPY --chown=node:node scripts/setup-admin.ts ./scripts/setup-admin.ts
+COPY --chown=node:node scripts/migrate.ts ./scripts/migrate.ts
 COPY --chown=node:node scripts/find-telegram-proxies.ts scripts/check-telegram.ts ./scripts/
 RUN mkdir -p /app/data /app/secrets && chown node:node /app/data /app/secrets
 USER node
 EXPOSE 3000 3001
-HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "--input-type=module", "-e", "const r=await fetch('http://127.0.0.1:3000/api/health');if(!r.ok)process.exit(1)"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "--input-type=module", "-e", "const r=await fetch('http://127.0.0.1:'+(process.env.SHARE_PORT||3001)+'/api/health');if(!r.ok)process.exit(1)"]
 CMD ["node", "--import", "tsx", "server/index.ts"]

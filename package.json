@@ -10,6 +10,7 @@
     "dev": "concurrently -k \"tsx watch server/index.ts\" \"vite --host localhost\"",
     "build": "tsc --noEmit && vite build",
     "start": "tsx server/index.ts",
+    "db:migrate": "tsx scripts/migrate.ts",
     "setup-admin": "tsx scripts/setup-admin.ts",
     "proxies:refresh": "tsx scripts/find-telegram-proxies.ts",
     "check:telegram": "tsx scripts/check-telegram.ts",

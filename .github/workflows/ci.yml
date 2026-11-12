@@ -26,6 +26,8 @@ jobs:
         run: npm run build
       - name: Test
         run: npm test
+      - name: Check Bash syntax
+        run: bash -n install.sh && bash -n update.sh && bash -n tests/deployment.sh
       - name: Audit dependencies
         run: npm audit --audit-level=low
 
@@ -62,6 +64,8 @@ jobs:
           chmod 600 .env
       - name: Build image
         run: docker compose build
+      - name: Validate remote admin Compose override
+        run: docker compose -f compose.yaml -f compose.remote-admin.yaml config --quiet
       - name: Prepare writable volumes
         run: docker compose run --rm --no-deps --user 0 --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE --entrypoint /bin/sh sfmap -c 'chown -R 1000:1000 /app/data /app/secrets'
       - name: Create admin key and database
@@ -88,6 +92,11 @@ jobs:
           docker compose up -d --wait --wait-timeout 120
           curl --fail --silent --show-error http://127.0.0.1:18080/api/health | grep -q '"source":"sqlite"'
           docker compose exec -T sfmap test -s /app/secrets/admin-access.txt
+      - name: Test upgrades, rollback and installer modes
+        run: bash tests/deployment.sh
       - name: Cleanup
         if: always()
-        run: docker compose down --volumes --remove-orphans
+        run: |
+          data_volume=$(docker inspect -f '{{range .Mounts}}{{if eq .Destination "/app/data"}}{{.Name}}{{end}}{{end}}' "$(docker compose ps -aq sfmap)" 2>/dev/null || true)
+          docker compose down --volumes --remove-orphans
+          if [[ -n "$data_volume" ]]; then docker volume rm "$data_volume" || true; fi

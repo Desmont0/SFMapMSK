@@ -1,0 +1,8 @@
+services:
+  sfmap:
+    # Host networking preserves the real client IP for ADMIN_ALLOW_IPS.
+    network_mode: host
+    ports: !reset []
+    environment:
+      PORT: ${PORT:-3000}
+      SHARE_PORT: ${SHARE_PORT:-3001}

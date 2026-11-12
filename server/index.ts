@@ -4,7 +4,8 @@ import rateLimit from 'express-rate-limit';
 import cookieParser from 'cookie-parser';
 import path from 'node:path';
 import fs from 'node:fs';
-import { config } from './config.ts';
+import https from 'node:https';
+import { config, isAdminIpAllowed } from './config.ts';
 import { db, setting, audit } from './db.ts';
 import { authenticate, createChallenge, requireAdmin, requireCsrf, hashToken, type AdminConfig } from './auth.ts';
 import { Repository } from './repository.ts';
@@ -17,8 +18,8 @@ app.use(helmet({ contentSecurityPolicy: { directives: {
   defaultSrc: ["'self'"], scriptSrc: ["'self'"], styleSrc: ["'self'", "'unsafe-inline'"],
   imgSrc: ["'self'", 'data:', 'blob:', 'https://tiles.openfreemap.org'],
   connectSrc: ["'self'", 'https://tiles.openfreemap.org'], workerSrc: ["'self'", 'blob:'],
-  fontSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: config.secure ? [] : null,
-} }, strictTransportSecurity: config.secure ? undefined : false }));
+  fontSrc: ["'self'"], objectSrc: ["'none'"], frameAncestors: ["'none'"], upgradeInsecureRequests: null,
+} }, strictTransportSecurity: false }));
 app.use(express.json({ limit: '32kb' })); app.use(cookieParser());
 app.use('/api', (_req,res,next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
 app.use('/api', rateLimit({ windowMs:60000, limit:180, standardHeaders:'draft-8', legacyHeaders:false, message:{error:'Слишком много запросов. Подождите минуту.'} }));
@@ -39,10 +40,15 @@ app.get('/api/participants', (_req,res) => {
 });
 const checkAccess: express.RequestHandler = (req,res,next) => {
   const admin = setting<AdminConfig>('admin');
-  if (!admin || req.body?.path !== admin.path || req.headers.origin !== config.origin) { res.status(404).json({error:'Адрес не найден'}); return; } next();
+  if (!isAdminIpAllowed(req.socket.remoteAddress) || !admin || req.body?.path !== admin.path || req.headers.origin !== config.origin) { res.status(404).json({error:'Адрес не найден'}); return; } next();
+};
+const requireAdminIp: express.RequestHandler = (req,res,next) => {
+  if (!isAdminIpAllowed(req.socket.remoteAddress)) { res.status(404).json({error:'Адрес не найден'}); return; }
+  next();
 };
 app.post('/api/admin/challenge', loginLimit, checkAccess, (_req,res) => res.json(createChallenge()));
 app.post('/api/admin/login', loginLimit, checkAccess, async (req,res) => res.json(await authenticate(req.body,res)));
+app.use('/api/admin', requireAdminIp);
 app.use('/api/admin', requireAdmin);
 app.get('/api/admin/session', (_req,res) => res.json({ csrf:res.locals.session.csrf, source:'sqlite' }));
 const adminSnapshot = () => ({ ...repository.snapshot, participants:repository.snapshot.participants.map(p => ({ ...p, avatar:avatarFor(p.telegram), avatarState:avatarState(p.telegram) })), source:'sqlite', error:repository.lastError });
@@ -78,7 +84,7 @@ const dist = path.resolve('dist');
 if (fs.existsSync(path.join(dist,'index.html'))) {
   app.use(express.static(dist,{index:false,maxAge:'1h'}));
   app.get('/{*path}', (req,res) => {
-    if (req.path === '/' || req.path === setting<AdminConfig>('admin')?.path) { res.setHeader('Cache-Control','no-store'); res.sendFile(path.join(dist,'index.html')); }
+    if (req.path === '/' || (req.path === setting<AdminConfig>('admin')?.path && isAdminIpAllowed(req.socket.remoteAddress))) { res.setHeader('Cache-Control','no-store'); res.sendFile(path.join(dist,'index.html')); }
     else res.status(404).send('Страница не найдена');
   });
 }
@@ -87,7 +93,10 @@ app.use((error: any,_req: express.Request,res: express.Response,_next: express.N
   const message = error.name === 'ZodError' ? error.issues.map((e:any) => e.path.join('.') + ': ' + e.message).join('; ') : status < 500 ? error.message : 'Операция не выполнена. Проверьте журнал сервера и обновите список.';
   res.status(status).json({error:message});
 });
-const server = app.listen(config.port,config.host,() => console.log('SFMap: ' + config.origin + ' [SQLite]'));
+const onListen = () => console.log('SFMap: ' + config.origin + ' [SQLite]');
+const server = config.tlsCert
+  ? https.createServer({ cert: fs.readFileSync(config.tlsCert), key: fs.readFileSync(config.tlsKey), minVersion: 'TLSv1.2' }, app).listen(config.port,config.host,onListen)
+  : app.listen(config.port,config.host,onListen);
 // The public listener accepts only map resources; administrative routes stay on the main listener.
 const shareApp = express();
 shareApp.disable('x-powered-by');

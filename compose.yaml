@@ -16,6 +16,9 @@ services:
       DATA_DIR: /app/data
       SECRETS_DIR: /app/secrets
       COOKIE_SECURE: ${COOKIE_SECURE:-false}
+      ADMIN_ALLOW_IPS: ${ADMIN_ALLOW_IPS:-}
+      TLS_CERT_FILE: ${TLS_CERT_FILE:-}
+      TLS_KEY_FILE: ${TLS_KEY_FILE:-}
       TELEGRAM_TRANSPORT: ${TELEGRAM_TRANSPORT:-proxy}
       TELEGRAM_PROXY_MODE: ${TELEGRAM_PROXY_MODE:-external}
       TELEGRAM_PROXY_FILE: /app/data/telegram-proxies.json

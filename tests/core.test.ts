@@ -6,6 +6,7 @@ import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { locations, searchLocations, locationById } from '../shared/locations.ts';
 import { matchesPlate } from '../shared/plate.ts';
 import { migrateLocation } from '../server/locations.ts';
+import { isIpAllowed } from '../server/config.ts';
 test('administrative geography includes Moscow, New Moscow, Zelenograd and oblast; excludes neighbouring regions', () => {
   for (const [name, lat, lon] of [['Moscow',55.7558,37.6173],['Troitsk',55.485,37.305],['Zelenograd',55.982,37.181],['Kolomna',55.093,38.768],['Serpukhov',54.917,37.415]] as const) assert.equal(inRegion(lat,lon),true,name);
   for (const [lat,lon] of [[56.858,35.9],[54.514,36.261],[59.93,30.31],[0,0]]) assert.equal(inRegion(lat,lon),false);
@@ -33,6 +34,15 @@ test('plate search accepts partial numbers, digits, separators and matching keyb
   assert.equal(matchesPlate('М034ММ 799','034'),true);
   assert.equal(matchesPlate('М034ММ 799','M034M'),true);
   for(const query of ['', '  - ', '000', 'A034']) assert.equal(matchesPlate('М034ММ 799',query),false,query);
+});
+test('remote admin allowlist accepts only the configured address', () => {
+  const allowlist = ['203.0.113.10'];
+  assert.equal(isIpAllowed('203.0.113.10', allowlist), true);
+  assert.equal(isIpAllowed('::ffff:203.0.113.10', allowlist), true);
+  assert.equal(isIpAllowed('203.0.113.11', allowlist), false);
+  assert.equal(isIpAllowed('127.0.0.1', allowlist), false);
+  assert.equal(isIpAllowed(undefined, allowlist), false);
+  assert.equal(isIpAllowed('127.0.0.1', []), true);
 });
 test('validation preserves text fields, normalizes Telegram and rejects missing or hostile URLs', () => {
   const input={...emptyParticipant,locationId:'moscow-137',name:'  Тест  ',city:'Москва',telegram:'https://t.me/sfmap_test/',plate:'00123',phone:'+7 000 000-00-00',comment:'<img src=x onerror=alert(1)>'};
