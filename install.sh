@@ -225,16 +225,16 @@ EOF
 chmod 600 .env
 
 log "Собираю SFMap."
-compose config --quiet || die 'Проверьте Compose. Для режима 4 нужен Compose >= 2.24.4 с поддержкой !reset.'
-compose build
+compose config --quiet </dev/null || die 'Проверьте Compose. Для режима 4 нужен Compose >= 2.24.4 с поддержкой !reset.'
+compose build </dev/null
 log "Подготавливаю права тома данных и каталога ключей."
-compose run --rm --no-deps -T --user 0 --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE --entrypoint /bin/sh sfmap -c "chown -R $CONTAINER_UID:$CONTAINER_GID /app/data /app/secrets"
+compose run --rm --no-deps -T --user 0 --cap-add CHOWN --cap-add FOWNER --cap-add DAC_OVERRIDE --entrypoint /bin/sh sfmap -c "chown -R $CONTAINER_UID:$CONTAINER_GID /app/data /app/secrets" </dev/null
 printf '%s\n' "$ADMIN_PASSWORD" | compose run --rm --no-deps -T sfmap npm run setup-admin -- --password-stdin
 unset ADMIN_PASSWORD ADMIN_PASSWORD_CONFIRM
 
 log "Запускаю SFMap и жду health-check."
 set +e
-compose up -d
+compose up -d </dev/null
 COMPOSE_START_STATUS=$?
 set -e
 if (( COMPOSE_START_STATUS != 0 )); then
@@ -256,7 +256,7 @@ done
 curl -fsS --max-time 5 "$HEALTH_URL" >/dev/null 2>&1 || { compose ps; compose logs --tail 50 sfmap; die "SFMap не прошёл health-check."; }
 
 if [[ "$MODE" != 1 ]]; then
-  read -r -p "Открыть порт карты $SHARE_PORT/tcp в UFW/firewalld? [y/N]: " OPEN_FIREWALL
+  read -r -p "Открыть порт карты $SHARE_PORT/tcp в UFW/firewalld? [y/N]: " OPEN_FIREWALL || OPEN_FIREWALL=''
   if [[ "$OPEN_FIREWALL" =~ ^[Yy]$ ]]; then
     if command -v ufw >/dev/null 2>&1; then run_root ufw allow "$SHARE_PORT/tcp"; fi
     if command -v firewall-cmd >/dev/null 2>&1; then run_root firewall-cmd --permanent --add-port="$SHARE_PORT/tcp"; run_root firewall-cmd --reload; fi
@@ -265,7 +265,7 @@ if [[ "$MODE" != 1 ]]; then
   fi
 fi
 if [[ "$MODE" == 4 ]]; then
-  read -r -p "Открыть порт админки $ADMIN_PORT/tcp только для $ADMIN_ALLOW_IP? [y/N]: " OPEN_ADMIN_FIREWALL
+  read -r -p "Открыть порт админки $ADMIN_PORT/tcp только для $ADMIN_ALLOW_IP? [y/N]: " OPEN_ADMIN_FIREWALL || OPEN_ADMIN_FIREWALL=''
   if [[ "$OPEN_ADMIN_FIREWALL" =~ ^[Yy]$ ]]; then
     if command -v ufw >/dev/null 2>&1; then run_root ufw allow from "$ADMIN_ALLOW_IP" to any port "$ADMIN_PORT" proto tcp; fi
     if command -v firewall-cmd >/dev/null 2>&1; then run_root firewall-cmd --permanent --add-rich-rule="rule family=ipv4 source address=$ADMIN_ALLOW_IP port port=$ADMIN_PORT protocol=tcp accept"; run_root firewall-cmd --reload; fi
