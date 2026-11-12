@@ -44,6 +44,10 @@ curl -fsS http://127.0.0.1:18081/api/health | grep -q '"source":"sqlite"'
 docker compose down
 password="SFMap-CI-$(openssl rand -hex 16)"
 printf '4\n127.0.0.1\n127.0.0.1\n127.0.0.1\n18080\n18081\n2\n%s\n%s\nn\nn\n' "$password" "$password" | bash install.sh
+for _ in {1..60}; do
+  curl --cacert secrets/tls.crt -fsS https://127.0.0.1:18080/api/health >/dev/null 2>&1 && break
+  sleep 1
+done
 curl --cacert secrets/tls.crt -fsS https://127.0.0.1:18080/api/health | grep -q '"source":"sqlite"'
 test "$(curl --cacert secrets/tls.crt -s -o /dev/null -w '%{http_code}' https://127.0.0.1:18080/api/admin/session)" = 401
 curl -fsS http://127.0.0.1:18081/api/participants | grep -q 'Upgrade participant'

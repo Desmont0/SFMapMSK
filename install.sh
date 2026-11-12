@@ -233,7 +233,7 @@ printf '%s\n' "$ADMIN_PASSWORD" | compose run --rm --no-deps -T sfmap npm run se
 unset ADMIN_PASSWORD ADMIN_PASSWORD_CONFIRM
 
 log "Запускаю SFMap и жду health-check."
-compose up -d
+compose up -d --wait --wait-timeout 120
 HEALTH_HOST="$SHARE_BIND"
 [[ "$HEALTH_HOST" == 0.0.0.0 ]] && HEALTH_HOST=127.0.0.1
 HEALTH_URL="http://$HEALTH_HOST:$SHARE_PORT/api/health"
