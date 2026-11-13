@@ -4,6 +4,7 @@ import { mkdtemp } from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 import { emptyParticipant } from '../shared/participant.ts';
+import { searchLocations } from '../shared/locations.ts';
 
 process.env.DATA_DIR = await mkdtemp(path.join(os.tmpdir(), 'sfmap-repository-'));
 const { db } = await import('../server/db.ts');
@@ -34,6 +35,22 @@ test('SQLite CRUD persists across instances, rejects stale writes and rolls back
   assert.deepEqual(repo.snapshot.participants, []);
   await assert.rejects(repo.mutate('delete', undefined, edited.id, edited.revision), { status: 409 });
   assert.equal((await repo.mutate('create', input))!.name, input.name, 'a failed transaction releases its lock');
+});
+
+test('new settlement selections persist unchanged across repository reloads',async()=>{
+  const repo=new Repository();await repo.initialize();
+  const place=searchLocations('Абрамцево Сергиево')[0];
+  const created=(await repo.mutate('create',{...emptyParticipant,name:'Житель села',locationId:place.id}))!;
+  const stored=db.prepare('SELECT data FROM participants WHERE id=?').get(created.id)!.data;
+  const reopened=new Repository();await reopened.initialize();
+  const restored=reopened.snapshot.participants.find(p=>p.id===created.id)!;
+  assert.deepEqual(restored,created);
+  assert.equal(restored.city,place.label);
+  assert.equal(restored.latitude,place.latitude);
+  assert.equal(restored.longitude,place.longitude);
+  assert.ok(restored.shareId);
+  assert.equal(db.prepare('SELECT data FROM participants WHERE id=?').get(created.id)!.data,stored,'reload does not rewrite the stored record');
+  await reopened.mutate('delete',undefined,created.id,created.revision);
 });
 
 test('garage owner links survive reload and prevent dangling or self references',async()=>{

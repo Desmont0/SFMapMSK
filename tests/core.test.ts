@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { participantSchema, storedParticipant, emptyParticipant } from '../shared/participant.ts';
 import { inRegion, region } from '../server/geography.ts';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
-import { locations, searchLocations, locationById } from '../shared/locations.ts';
+import { locations, searchLocations, locationById, normalizePlace } from '../shared/locations.ts';
 import { matchesPlate } from '../shared/plate.ts';
 import { migrateLocation } from '../server/locations.ts';
 import { isIpAllowed } from '../server/config.ts';
@@ -33,8 +33,8 @@ test('catalog autocomplete, whole cities, legacy migration and shared district p
   assert.equal(searchLocations('Москва, Яс')[0].label,'Москва, Ясенево');
   assert.equal(searchLocations('москва ясен')[0].id,'moscow-137');
   assert.equal(searchLocations('Королев')[0].label,'Королёв');
-  assert.deepEqual(searchLocations('Зеленоград').map(p=>p.label),['Зеленоград']);
-  assert.equal(searchLocations('Крюково')[0].label,'Зеленоград');
+  assert.equal(searchLocations('Зеленоград')[0].label,'Зеленоград');
+  assert.ok(searchLocations('Москва Крюково').some(p=>p.id==='city-zelenograd'));
   assert.equal(new Set(locations.map(p=>p.id)).size,locations.length);
   assert.ok(locations.length>180);
   for(const p of locations) assert.equal(inRegion(p.latitude,p.longitude),true,p.label);
@@ -43,6 +43,32 @@ test('catalog autocomplete, whole cities, legacy migration and shared district p
   assert.equal(migrateLocation({city:'Зеленоград',latitude:55.99,longitude:37.2}).locationId,'city-zelenograd');
   assert.equal(migrateLocation({city:'Несуществующий город',latitude:55.76,longitude:37.57}).locationId,'');
   assert.equal(migrateLocation({city:'Москва',latitude:59.93,longitude:30.31}).locationId,'');
+});
+test('settlement catalog distinguishes namesakes, searches municipalities and validates new locations', () => {
+  const settlements=locations.filter(p=>p.kind==='settlement');
+  assert.ok(settlements.length>5900);
+  assert.equal(new Set(locations.map(p=>normalizePlace(p.label))).size,locations.length,'every option has a distinct label');
+  for(const p of settlements){
+    assert.ok(p.name&&p.municipality&&p.settlementType,p.label);
+    assert.ok(p.id.startsWith('osm-'),p.id);
+  }
+  for(const name of ['Абрамцево','Барвиха','Нахабино','Томилино','Большие Вязёмы']){
+    const matches=searchLocations(name,100);
+    assert.ok(matches.some(p=>p.name===name),name);
+  }
+  const namesakes=locations.filter(p=>p.name==='Ивановка');
+  assert.ok(namesakes.length>2);
+  for(const p of namesakes){
+    const matches=searchLocations(p.label);
+    assert.equal(matches[0].id,p.id,'full label selects the correct namesake');
+  }
+  const village=searchLocations('Абрамцево Сергиево')[0];
+  assert.equal(village.name,'Абрамцево');
+  assert.equal(village.settlementType,'село');
+  const participant=participantSchema.parse({...emptyParticipant,name:'В деревне',locationId:village.id});
+  assert.equal(participant.city,village.label);
+  assert.equal(participant.latitude,village.latitude);
+  assert.equal(participant.longitude,village.longitude);
 });
 test('plate search accepts partial numbers, digits, separators and matching keyboard alphabets', () => {
   for(const query of ['777','77','а777','A777AA','аа 777','A 777 AА-777']) assert.equal(matchesPlate('А777АА 777',query),true,query);

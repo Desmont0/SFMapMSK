@@ -2,6 +2,7 @@ import fs from 'node:fs/promises';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { inRegion } from '../server/geography.ts';
 import type { FeatureCollection, Polygon, MultiPolygon } from 'geojson';
+import type { Location } from '../shared/locations.ts';
 
 // Rebuild the local place catalog from attributed public reference data.
 const districtUrl = 'https://raw.githubusercontent.com/codeforgermany/click_that_hood/main/public/data/moscow.geojson';
@@ -23,7 +24,7 @@ function csv(text: string) {
   if (value || row.length) { row.push(value); rows.push(row); }
   return rows.slice(1).map(row => Object.fromEntries(rows[0].map((key, i) => [key, row[i] || ''])));
 }
-type Place = { id: string; label: string; kind: 'district' | 'city'; latitude: number; longitude: number; aliases?: string[] };
+type Place = Location;
 const places: Place[] = [];
 const boundaries: FeatureCollection<Polygon | MultiPolygon> = { type: 'FeatureCollection', features: [] };
 const districts = JSON.parse(await source('data/location-districts-source.json', districtUrl)) as FeatureCollection<Polygon | MultiPolygon>;
@@ -57,6 +58,9 @@ for (const row of csv(await source('data/location-cities-source.csv', cityUrl)))
   if (!label || places.some(p => p.label === label)) continue;
   places.push({ id: 'city-' + row.fias_id, label, kind: 'city', latitude: +Number(row.geo_lat).toFixed(5), longitude: +Number(row.geo_lon).toFixed(5) });
 }
+// Rebuilding legacy sources must not erase the imported settlements.
+const saved = JSON.parse(await fs.readFile('shared/locations.json', 'utf8')) as Location[];
+for (const place of saved) if (place.id.startsWith('osm-')) places.push(place);
 places.sort((a, b) => a.label.localeCompare(b.label, 'ru'));
 for (const p of places) if (!inRegion(p.latitude, p.longitude)) throw new Error('Outside region: ' + p.label);
 await fs.writeFile('shared/locations.json', JSON.stringify(places, null, 2) + '\n');

@@ -1,14 +1,12 @@
 import { z } from 'zod';
 import { locationById } from './locations.ts';
 const text = (max: number) => z.string().trim().max(max).default('');
-export const kindLabels = { person: 'Участник', garage: 'Гараж', service: 'Сервис', meetup: 'Место встречи' } as const;
-export type EntryKind = keyof typeof kindLabels;
-export const kindIcons: Record<EntryKind, string> = { person: '', garage: '⌂', service: '⚒', meetup: '⚑' };
+export { kindLabels, kindIcons, initials, type EntryKind } from './entry.ts';
 export const participantSchema = z.object({
   kind: z.enum(['person', 'garage', 'service', 'meetup']).default('person'),
   name: z.string().trim().min(1, 'Укажите имя или название').max(80),
   telegram: z.string().trim().regex(new RegExp('^(?:https://t[.]me/[a-zA-Z][a-zA-Z0-9_]{3,31}/?|)$'), 'Нужна ссылка https://t.me/username').default('').transform(v => v.endsWith('/') ? v.slice(0, -1) : v),
-  locationId: z.string().refine(id => locationById.has(id), 'Выберите район или город из списка'),
+  locationId: z.string().refine(id => locationById.has(id), 'Выберите район или населённый пункт из списка'),
   address: text(240),
   ownerId: text(80),
   exactLatitude: z.number().min(-90).max(90).nullable().default(null),
@@ -41,6 +39,5 @@ export type ParticipantInput = z.infer<typeof participantSchema>;
 export type Participant = ParticipantInput & { id: string; shareId: string; updatedAt: string; revision: string };
 export type PublicParticipant = Omit<Participant, 'telegram' | 'adminComment' | 'revision' | 'exactLatitude' | 'exactLongitude'> & { avatar: string | null; owner?: {name:string;shareId:string} | null };
 export const fields = ['id','shareId','kind','name','telegram','city','address','ownerId','plate','color','year','sunroof','engine','transmission','aspiration','market','comment','latitude','longitude','exactLatitude','exactLongitude','adminComment','updatedAt','locationId'] as const;
-export const fieldLabels: Record<string, string> = { id:'ID', shareId:'Короткая ссылка', kind:'Тип записи', name:'Имя / название', telegram:'Telegram', city:'Город', address:'Адрес', ownerId:'Владелец гаража (ID)', plate:'Госномер', color:'Цвет', year:'Год выпуска', sunroof:'Люкатый', engine:'Объём двигателя', transmission:'КПП', aspiration:'Атмо / турбо', market:'Рынок', comment:'Комментарий для карты', latitude:'Широта', longitude:'Долгота', exactLatitude:'Точная широта', exactLongitude:'Точная долгота', adminComment:'Комментарий администратора', updatedAt:'Изменено', locationId:'Район или город' };
-export function initials(name: string) { return name.trim().split(/\s+/).slice(0, 2).map(v => v[0]).join('').toUpperCase(); }
+export const fieldLabels: Record<string, string> = { id:'ID', shareId:'Короткая ссылка', kind:'Тип записи', name:'Имя / название', telegram:'Telegram', city:'Населённый пункт / район', address:'Адрес', ownerId:'Владелец гаража (ID)', plate:'Госномер', color:'Цвет', year:'Год выпуска', sunroof:'Люкатый', engine:'Объём двигателя', transmission:'КПП', aspiration:'Атмо / турбо', market:'Рынок', comment:'Комментарий для карты', latitude:'Широта', longitude:'Долгота', exactLatitude:'Точная широта', exactLongitude:'Точная долгота', adminComment:'Комментарий администратора', updatedAt:'Изменено', locationId:'Район или населённый пункт' };
 export const emptyParticipant: ParticipantInput = { kind:'person', name:'', telegram:'', locationId:'', city:'', address:'', ownerId:'', exactLatitude:null, exactLongitude:null, plate:'', color:'', year:'', sunroof:'Нет', engine:'', transmission:'', aspiration:'', market:'', comment:'', adminComment:'', latitude:0, longitude:0 };

@@ -105,6 +105,33 @@ test('admin exposes owner, market, exact coordinates and map settings at tablet 
   await expect(page.getByRole('button',{name:'Сохранить вид карты'})).toBeEnabled();
 });
 
+test('settlement picker distinguishes namesakes and fits a mobile screen',async({page,context})=>{
+  await context.addCookies([{name:'sfmap_session',value:'browser-test-session',url:'http://127.0.0.1:18765/api/admin'}]);
+  await page.goto('/manage-browser-test');
+  const picker=page.getByRole('combobox',{name:/Район или населённый пункт/});
+  await picker.fill('Абрамцево Дмитров');
+  const options=page.getByRole('listbox',{name:'Подходящие места'});
+  await expect(options.getByRole('option')).toHaveCount(2);
+  await expect(options).toContainText('рядом с Бунятино');
+  await expect(options).toContainText('рядом с Микляево');
+  await options.scrollIntoViewIfNeeded();
+  const box=(await options.boundingBox())!;
+  expect(box.x).toBeGreaterThanOrEqual(0);
+  expect(box.x+box.width).toBeLessThanOrEqual(391);
+  expect(await options.evaluate(element=>element.scrollWidth<=element.clientWidth)).toBe(true);
+  await page.screenshot({path:'test-results/'+test.info().project.name+'-settlements.png'});
+  await picker.fill('Абрамцево Сергиево');
+  const village=options.getByRole('option',{name:'Абрамцево, Сергиево-Посадский городской округ село',exact:true});
+  await expect(options.getByRole('option').first()).toHaveText('Абрамцево, Сергиево-Посадский городской округсело');
+  await village.click();
+  await expect(picker).toHaveValue('Абрамцево, Сергиево-Посадский городской округ');
+  await expect(options).toHaveCount(0);
+  await picker.fill('Москва Яс');
+  await picker.press('ArrowDown');await picker.press('Enter');
+  await expect(picker).toHaveValue('Москва, Ясенево');
+  await expect(options).toHaveCount(0);
+});
+
 test('groups stay absolutely positioned in both themes through zoom changes',async({page})=>{
   await mapStyle(page);
   const records=await (await page.request.get('/api/participants')).json();

@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { initials, kindIcons, kindLabels, type PublicParticipant } from '../shared/participant';
+import { initials, kindIcons, kindLabels } from '../shared/entry';
+import type { PublicParticipant } from '../shared/participant';
 import { copyText } from './clipboard';
 import { LinkedText } from './LinkedText';
 export const avatarHue = (name: string) => Array.from(name || 'Участник').reduce((n,c) => n + c.charCodeAt(0), 0) % 36 + 190;
