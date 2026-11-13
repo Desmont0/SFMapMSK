@@ -10,7 +10,7 @@ async function mapStyle(page:Page){
 }
 async function entries(page:Page){return (await (await page.request.get('/api/participants')).json()).participants as Array<{id:string;name:string;shareId:string;kind:string}>;}
 
-test('direct links hide person coordinates, highlight selection and copy place coordinates',async({page})=>{
+test('direct links hide person coordinate controls, highlight selection and copy place coordinates',async({page})=>{
   await mapStyle(page);const records=await entries(page),person=records.find(p=>p.kind==='person')!;
   await page.addInitScript(()=>{
     (window as any).copied=[];(window as any).shareCalls=0;
@@ -103,6 +103,38 @@ test('admin exposes owner, market, exact coordinates and map settings at tablet 
   await expect(page.getByLabel('Точная широта',{exact:true})).toBeVisible();
   await page.getByText('Вид кружочков на карте',{exact:true}).click();
   await expect(page.getByRole('button',{name:'Сохранить вид карты'})).toBeEnabled();
+});
+
+test('person coordinates move the marker while the district label and hidden coordinate controls remain',async({page,context})=>{
+  await context.addCookies([{name:'sfmap_session',value:'browser-test-session',url:'http://127.0.0.1:18765/api/admin'}]);
+  const headers={origin:'http://127.0.0.1:18765','x-csrf-token':'browser-test-csrf'};
+  const input={kind:'person',name:'Приоритет координат',locationId:'moscow-137',latitude:0,longitude:0};
+  const created=await page.request.post('/api/admin/participants',{headers,data:input});
+  expect(created.status(),await created.text()).toBe(201);let record=await created.json();
+  try{
+    await mapStyle(page);await page.goto('/');
+    await expect(page.getByRole('button',{name:'Приблизить карту',exact:true})).toBeEnabled();
+    await page.getByRole('button',{name:'Участники',exact:true}).click();
+    const marker=page.locator('.maplibregl-marker[data-entry-id="'+record.id+'"]');
+    await expect(marker).toBeVisible();const initial=(await marker.boundingBox())!;
+    const update=async(exactLatitude:number|null,exactLongitude:number|null)=>{
+      const response=await page.request.put('/api/admin/participants/'+record.id,{headers,data:{...input,exactLatitude,exactLongitude,revision:record.revision}});
+      expect(response.status()).toBe(200);record=await response.json();
+      await page.evaluate(()=>window.dispatchEvent(new Event('online')));
+    };
+    await update(55.8,37.58);
+    await expect.poll(async()=>{const box=await marker.boundingBox();return box?Math.hypot(box.x-initial.x,box.y-initial.y):0;}).toBeGreaterThan(30);
+    await marker.click();const card=page.getByRole('article',{name:'Участник '+input.name});
+    await expect(card.locator('.city')).toHaveText('Москва, Ясенево');
+    await expect(card.locator('.coordinate-actions')).toHaveCount(0);
+    await expect(card.getByRole('link',{name:'Навигация ↗'})).toHaveCount(0);
+    await update(null,null);
+    await expect.poll(async()=>{const box=await marker.boundingBox();return box?Math.hypot(box.x-initial.x,box.y-initial.y):Infinity;}).toBeLessThan(1);
+    await expect(card.locator('.city')).toHaveText('Москва, Ясенево');
+  }finally{
+    const deleted=await page.request.delete('/api/admin/participants/'+record.id,{headers,data:{revision:record.revision}});
+    expect(deleted.status()).toBe(200);
+  }
 });
 
 test('settlement picker distinguishes namesakes and fits a mobile screen',async({page,context})=>{

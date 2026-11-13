@@ -27,6 +27,6 @@ export function LocationPicker({ value, onChange }: { value: string; onChange: (
       {options.map((place, index) => <button type="button" role="option" id={id + '-' + index} key={place.id} aria-selected={index === active} onPointerMove={() => setActive(index)} onClick={() => choose(index)}><span>{place.label}</span><small>{locationKindLabel(place)}</small></button>)}
       {!options.length && <p>Ничего не найдено. Введите район Москвы или населённый пункт области; можно добавить название округа.</p>}
     </div>}
-    <p className="field-hint">Выберите подсказку. Одноимённые населённые пункты различаются по округу. На карте показывается общий центр выбранного места.</p>
+    <p className="field-hint">Выберите подсказку. Одноимённые населённые пункты различаются по округу. Без точных координат на карте показывается общий центр выбранного места.</p>
   </div>;
 }

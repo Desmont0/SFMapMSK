@@ -90,15 +90,14 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
     assert.equal('telegram' in visible,false);assert.equal(JSON.stringify(publicAfter.body).includes(input.telegram),false);assert.equal(visible.avatar,photoBody.avatar);
     assert.equal((await fetch(shareOrigin+'/p/'+created.body.shareId)).status,200,'short link serves the public app');
     const linked=await (await fetch(shareOrigin+'/api/participants/'+created.body.shareId)).json() as any; assert.equal(linked.id,id);assert.equal(linked.sunroof,'Да');
-    // Both public listeners, lists and direct links must conceal the precise person location.
+    // Lists and direct links position people at their exact point on both listeners.
     for(const publicOrigin of [origin,shareOrigin]){
       for(const endpoint of ['/api/participants','/api/participants/'+created.body.shareId]){
         const response=await fetch(publicOrigin+endpoint);assert.equal(response.status,200);
         const body=await response.json() as any;const person=body.participants?.find((p:any)=>p.id===id)||body;
-        assert.equal(person.latitude,55.61563);assert.equal(person.longitude,37.53717);
+        assert.equal(person.latitude,input.exactLatitude);assert.equal(person.longitude,input.exactLongitude);
+        assert.equal(person.city,'Москва, Ясенево');
         assert.equal('exactLatitude' in person,false);assert.equal('exactLongitude' in person,false);
-        assert.equal(JSON.stringify(body).includes(String(input.exactLatitude)),false);
-        assert.equal(JSON.stringify(body).includes(String(input.exactLongitude)),false);
       }
     }
     const exported=await fetch(origin+'/api/admin/export.txt',{headers:{origin,...headers}});assert.equal(exported.status,200);const exportText=await exported.text();assert.match(exportText,/Тест безопасности/);assert.match(exportText,/Фото WebP \(base64\): [A-Za-z0-9+/=]+/);
@@ -113,7 +112,12 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
     }
     assert.equal((await request('/admin/participants','POST',{...input,exactLatitude:59.93,exactLongitude:30.31},headers)).response.status,400,'exact coordinates outside region rejected');
     assert.equal((await request('/admin/participants/'+id+'/photo','DELETE',{},headers)).response.status,200);
-    const edited=await request('/admin/participants/'+id,'PUT',{...input,name:'Изменённый',revision:created.body.revision},headers);assert.equal(edited.response.status,200);
+    const moved=await request('/admin/participants/'+id,'PUT',{...input,exactLatitude:55.85,exactLongitude:37.7,revision:created.body.revision},headers);assert.equal(moved.response.status,200);
+    const movedPublic=await (await fetch(shareOrigin+'/api/participants/'+created.body.shareId)).json() as any;
+    assert.equal(movedPublic.latitude,55.85);assert.equal(movedPublic.longitude,37.7);assert.equal(movedPublic.city,'Москва, Ясенево');
+    const edited=await request('/admin/participants/'+id,'PUT',{...input,name:'Изменённый',exactLatitude:null,exactLongitude:null,revision:moved.body.revision},headers);assert.equal(edited.response.status,200);
+    const centred=await (await fetch(shareOrigin+'/api/participants/'+created.body.shareId)).json() as any;
+    assert.equal(centred.latitude,55.61563);assert.equal(centred.longitude,37.53717);assert.equal(centred.shareId,created.body.shareId);
     assert.equal((await request('/admin/participants/'+id,'PUT',{...input,revision:created.body.revision},headers)).response.status,409,'stale revision rejected');
     assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:created.body.revision},headers)).response.status,409);
     const audit=await request('/admin/audit','GET',undefined,headers);assert.equal(JSON.stringify(audit.body).includes('DO-NOT-PUBLISH'),false);assert.equal(JSON.stringify(audit.body).includes(password),false);
