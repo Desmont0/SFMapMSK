@@ -6,7 +6,7 @@ import path from 'node:path';
 import fs from 'node:fs';
 import https from 'node:https';
 import { config, isAdminIpAllowed } from './config.ts';
-import { db, setting, audit } from './db.ts';
+import { db, setting, setSetting, audit } from './db.ts';
 import { authenticate, createChallenge, requireAdmin, requireCsrf, hashToken, type AdminConfig } from './auth.ts';
 import { Repository } from './repository.ts';
 import { photoFor, savePhoto, MAX_PHOTO_BYTES } from './photos.ts';
@@ -14,6 +14,7 @@ import { exportText } from './export.ts';
 import { cachedResource, localResources, warmMapCache, mapCacheStatus } from './map-cache.ts';
 import { participantSchema, type PublicParticipant } from '../shared/participant.ts';
 import { requireRegion } from './geography.ts';
+import { mapSettingsSchema, defaultMapSettings } from '../shared/map-settings.ts';
 const app = express();
 app.disable('x-powered-by');
 app.use(helmet({ contentSecurityPolicy: { directives: {
@@ -24,7 +25,8 @@ app.use(helmet({ contentSecurityPolicy: { directives: {
 } }, strictTransportSecurity: false }));
 app.use(express.json({ limit: '32kb' })); app.use(cookieParser());
 app.use('/api', (_req,res,next) => { res.setHeader('Cache-Control', 'no-store'); next(); });
-app.use('/api', rateLimit({ windowMs:60000, limit:180, standardHeaders:'draft-8', legacyHeaders:false, message:{error:'Слишком много запросов. Подождите минуту.'} }));
+// Public polling must not exhaust a shared reverse-proxy/NAT IP quota.
+app.use('/api/admin', rateLimit({ windowMs:60000, limit:180, standardHeaders:'draft-8', legacyHeaders:false, message:{error:'Слишком много запросов. Подождите минуту.'} }));
 const loginLimit = rateLimit({ windowMs:15*60*1000, limit:15, standardHeaders:'draft-8', legacyHeaders:false, message:{error:'Слишком много попыток входа. Повторите через 15 минут.'} });
 const repository = new Repository();
 await repository.initialize();
@@ -38,6 +40,7 @@ app.get('/map-cache/{*resource}', async (req,res) => {
   try {
     const data = await cachedResource(decoded);
     res.setHeader('Cache-Control','public, max-age=86400');
+    // The browser resolves these paths against its HTTPS origin, including behind a proxy.
     if (decoded==='planet'||decoded.startsWith('styles/')||decoded.endsWith('.json')) res.json(localResources(JSON.parse(data.toString())));
     else res.type(decoded.endsWith('.png')?'image/png':'application/x-protobuf').send(data);
   } catch(error:any) {res.status(error.status||503).json({error:'Ресурс карты пока не загружен в кэш. Повторите позже.'});}
@@ -51,8 +54,11 @@ app.get('/photos/:file', (req,res) => {
 app.get('/api/health', (_req,res) => res.json({ ok:true, source:'sqlite' }));
 const publicParticipant = (p: (typeof repository.snapshot.participants)[number]): PublicParticipant => {
   const {telegram:_telegram,adminComment:_adminComment,revision:_revision,...visible}=p;
-  return {...visible,avatar:photoFor(p.id)};
+  const owner = p.ownerId ? repository.snapshot.participants.find(entry=>entry.id===p.ownerId&&entry.kind==='person') : null;
+  return {...visible,avatar:photoFor(p.id),owner:owner?{name:owner.name,shareId:owner.shareId}:null};
 };
+const mapSettings = () => mapSettingsSchema.parse(setting('map-settings') || defaultMapSettings);
+app.get('/api/map-settings', (_req,res)=>res.json(mapSettings()));
 app.get('/api/participants', (_req,res) => {
   const participants = repository.snapshot.participants.map(publicParticipant);
   res.json({ participants, source:'sqlite', stale:!!repository.lastError, syncedAt:repository.snapshot.syncedAt });
@@ -76,6 +82,8 @@ app.use('/api/admin', requireAdmin);
 app.get('/api/admin/session', (_req,res) => res.json({ csrf:res.locals.session.csrf, source:'sqlite' }));
 const adminSnapshot = () => ({ ...repository.snapshot, participants:repository.snapshot.participants.map(p => ({ ...p, avatar:photoFor(p.id) })), source:'sqlite', error:repository.lastError });
 app.get('/api/admin/participants', (_req,res) => res.json(adminSnapshot()));
+app.get('/api/admin/map-settings', (_req,res)=>res.json(mapSettings()));
+app.put('/api/admin/map-settings', requireCsrf, (req,res)=>{const settings=mapSettingsSchema.parse(req.body);setSetting('map-settings',settings);audit('map_settings_updated');res.json(settings);});
 app.get('/api/admin/map-cache', async (_req,res) => res.json(await mapCacheStatus()));
 app.post('/api/admin/map-cache', requireCsrf, (_req,res) => {void warmMapCache().catch(() => {});res.status(202).json({ok:true});});
 app.get('/api/admin/export.txt', async (_req,res) => {
@@ -110,7 +118,9 @@ app.delete('/api/admin/participants/:id', requireCsrf, async (req,res) => { awai
 app.use('/api', (_req,res) => res.status(404).json({error:'Адрес не найден'}));
 const dist = path.resolve('dist');
 if (fs.existsSync(path.join(dist,'index.html'))) {
-  app.use(express.static(dist,{index:false,maxAge:'1h'}));
+  app.use(express.static(dist,{index:false,setHeaders:(res,file)=>{
+    res.setHeader('Cache-Control',file.startsWith(path.join(dist,'assets')+path.sep)?'public, max-age=31536000, immutable':'public, max-age=3600');
+  }}));
   app.get('/{*path}', (req,res) => {
     if (req.path === '/' || (/^\/p\/[A-Za-z0-9_-]{8}$/.test(req.path) && repository.snapshot.participants.some(p=>'/p/'+p.shareId===req.path)) || (req.path === setting<AdminConfig>('admin')?.path && isAdminIpAllowed(req.socket.remoteAddress))) { res.setHeader('Cache-Control','no-store'); res.sendFile(path.join(dist,'index.html')); }
     else res.status(404).send('Страница не найдена');
@@ -129,7 +139,7 @@ const server = config.tlsCert
 const shareApp = express();
 shareApp.disable('x-powered-by');
 shareApp.use((req,res) => {
-  const publicPath = ['/', '/favicon.svg', '/api/health', '/api/participants'].includes(req.path) || /^\/(assets|geo|photos|map-cache)\//.test(req.path) || /^\/p\/[A-Za-z0-9_-]{8}$/.test(req.path) || /^\/api\/participants\/[A-Za-z0-9_-]{8}$/.test(req.path);
+  const publicPath = ['/', '/favicon.svg', '/api/health', '/api/participants','/api/map-settings'].includes(req.path) || /^\/(assets|geo|photos|map-cache)\//.test(req.path) || /^\/p\/[A-Za-z0-9_-]{8}$/.test(req.path) || /^\/api\/participants\/[A-Za-z0-9_-]{8}$/.test(req.path);
   if (!['GET','HEAD'].includes(req.method) || !publicPath) { res.status(404).send('Страница не найдена'); return; }
   app(req,res);
 });

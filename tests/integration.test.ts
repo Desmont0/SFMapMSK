@@ -55,6 +55,13 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
     assert.equal((await request('/admin/login','POST',{path:adminAccess.adminPath,password,proof:await proof(expired)})).response.status,401);
     const session=await login();assert.equal((await request('/admin/login','POST',{path:adminAccess.adminPath,password,proof:session.signed})).response.status,401,'proof replay rejected');
     const headers={cookie:session.cookie,'x-csrf-token':session.csrf};
+    const settings={fontFamily:'Arial',fontSize:20,markerSize:48,clusterRadius:0};
+    assert.equal((await request('/admin/map-settings','PUT',settings,{cookie:session.cookie})).response.status,403);
+    assert.equal((await request('/admin/map-settings','PUT',{...settings,fontSize:100},headers)).response.status,400);
+    assert.deepEqual((await request('/admin/map-settings','PUT',settings,headers)).body,settings);
+    assert.deepEqual(await (await fetch(shareOrigin+'/api/map-settings')).json(),settings);
+    const publicBurst=await Promise.all(Array.from({length:185},()=>fetch(shareOrigin+'/api/health')));
+    assert.ok(publicBurst.every(r=>r.status===200),'visitors sharing a proxy IP do not exhaust the admin quota');
     assert.equal((await fetch(shareOrigin+'/api/admin/participants',{headers:{...headers,origin}})).status,404,'even a valid local admin session cannot use the public listener');
     const admin=await request('/admin/participants','GET',undefined,headers);assert.equal(admin.body.source,'sqlite');assert.deepEqual(admin.body.participants,[]);
     const input={...emptyParticipant,locationId:'moscow-137',name:'Тест безопасности',city:'Москва',telegram:'https://t.me/sfmap_test',plate:'00123',sunroof:'Да' as const,phone:'+7 111 222-33-44',comment:'<img src=x onerror=alert(1)>',adminComment:'DO-NOT-PUBLISH'};
@@ -83,14 +90,19 @@ test('production API: key authentication, protected fields, CRUD, conflicts, exp
     assert.equal((await fetch(shareOrigin+'/p/'+created.body.shareId)).status,200,'short link serves the public app');
     const linked=await (await fetch(shareOrigin+'/api/participants/'+created.body.shareId)).json() as any; assert.equal(linked.id,id);assert.equal(linked.sunroof,'Да');
     const exported=await fetch(origin+'/api/admin/export.txt',{headers:{origin,...headers}});assert.equal(exported.status,200);const exportText=await exported.text();assert.match(exportText,/Тест безопасности/);assert.match(exportText,/Фото WebP \(base64\): [A-Za-z0-9+/=]+/);
-    const garage=await request('/admin/participants','POST',{...emptyParticipant,kind:'garage',name:'Гараж тест',locationId:'moscow-137',address:'Тестовый адрес',latitude:55.61,longitude:37.53},headers);assert.equal(garage.response.status,201);assert.equal(garage.body.kind,'garage');assert.equal(garage.body.plate,'');
+    const garage=await request('/admin/participants','POST',{...emptyParticipant,kind:'garage',name:'Гараж тест',locationId:'moscow-137',address:'Тестовый адрес',exactLatitude:55.61,exactLongitude:37.53,ownerId:id},headers);assert.equal(garage.response.status,201);assert.equal(garage.body.kind,'garage');assert.equal(garage.body.plate,'');assert.equal(garage.body.latitude,55.61);
+    const publicGarage=await (await fetch(shareOrigin+'/api/participants/'+garage.body.shareId)).json() as any;assert.deepEqual(publicGarage.owner,{name:input.name,shareId:created.body.shareId});
+    assert.equal((await request('/admin/participants','POST',{...input,exactLatitude:59.93,exactLongitude:30.31},headers)).response.status,400,'exact coordinates outside region rejected');
     assert.equal((await request('/admin/participants/'+id+'/photo','DELETE',{},headers)).response.status,200);
     const edited=await request('/admin/participants/'+id,'PUT',{...input,name:'Изменённый',revision:created.body.revision},headers);assert.equal(edited.response.status,200);
     assert.equal((await request('/admin/participants/'+id,'PUT',{...input,revision:created.body.revision},headers)).response.status,409,'stale revision rejected');
     assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:created.body.revision},headers)).response.status,409);
     const audit=await request('/admin/audit','GET',undefined,headers);assert.equal(JSON.stringify(audit.body).includes('DO-NOT-PUBLISH'),false);assert.equal(JSON.stringify(audit.body).includes(password),false);
     await stop();await start();assert.ok((await request('/participants')).body.participants.some((p:any)=>p.id===id),'participant survives restart');
+    assert.deepEqual((await request('/map-settings')).body,settings,'map settings persist after restart');
     assert.equal((await request('/admin/participants','GET',undefined,headers)).body.participants.find((p:any)=>p.id===id).avatar,null,'photo deletion survives restart');
+    assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:edited.body.revision},headers)).response.status,409,'owner cannot be deleted while a garage refers to them');
+    assert.equal((await request('/admin/participants/'+garage.body.id,'DELETE',{revision:garage.body.revision},headers)).response.status,200);
     assert.equal((await request('/admin/participants/'+id,'DELETE',{revision:edited.body.revision},headers)).response.status,200);
     assert.equal((await request('/participants')).body.participants.some((p:any)=>p.id===id),false);
     {const sql=new DatabaseSync(path.join(temp,'data/sfmap.sqlite'));sql.prepare('UPDATE sessions SET expires=?').run(Date.now()-1000);sql.close();}

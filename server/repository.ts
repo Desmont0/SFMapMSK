@@ -1,6 +1,6 @@
 import { createHash, randomUUID, randomBytes } from 'node:crypto';
 import { db } from './db.ts';
-import { participantSchema, type Participant, type ParticipantInput } from '../shared/participant.ts';
+import { participantSchema, storedParticipant, type Participant, type ParticipantInput } from '../shared/participant.ts';
 import { requireRegion } from './geography.ts';
 
 export type RowError = { row: number; message: string };
@@ -10,7 +10,7 @@ const fail = (message: string, status = 409): never => { throw Object.assign(new
 type ParticipantRow = { id: string; share_id: string; data: string; updated_at: string; revision: string };
 
 function decode(row: ParticipantRow): Participant {
-  return { ...participantSchema.parse(JSON.parse(row.data)), id: row.id, shareId: row.share_id, updatedAt: row.updated_at, revision: row.revision };
+  return { ...storedParticipant(JSON.parse(row.data)), id: row.id, shareId: row.share_id, updatedAt: row.updated_at, revision: row.revision };
 }
 
 export class Repository {
@@ -39,12 +39,19 @@ export class Repository {
       if (action !== 'create' && !row) fail('Запись больше не существует. Обновите список.');
       if (action !== 'create' && row!.revision !== expected) fail('Запись уже изменена в другой вкладке. Обновите список.');
       if (action === 'delete') {
+        if (db.prepare("SELECT 1 FROM participants WHERE json_extract(data,'$.ownerId')=? LIMIT 1").get(id!)) fail('Сначала уберите этого владельца из связанных гаражей.');
         db.prepare('DELETE FROM photos WHERE participant_id=?').run(id!);
         db.prepare('DELETE FROM participant_links WHERE participant_id=?').run(id!);
         db.prepare('DELETE FROM participants WHERE id=?').run(id!);
       } else {
         if (action === 'create' && (db.prepare('SELECT count(*) AS count FROM participants').get() as any).count >= 1000) fail('Достигнут лимит 1000 участников.', 400);
         const data = participantSchema.parse(input);
+        if (data.ownerId) {
+          if (data.ownerId === id) fail('Гараж не может быть своим владельцем. Выберите участника.',400);
+          const owner = db.prepare('SELECT data FROM participants WHERE id=?').get(data.ownerId) as {data:string}|undefined;
+          if (!owner || (JSON.parse(owner.data).kind || 'person') !== 'person') fail('Выберите владельца из списка участников.',400);
+        }
+        if (data.kind !== 'person' && id && db.prepare("SELECT 1 FROM participants WHERE json_extract(data,'$.ownerId')=? LIMIT 1").get(id)) fail('Сначала уберите этого владельца из связанных гаражей.');
         requireRegion(data.latitude, data.longitude);
         const participantId = action === 'create' ? randomUUID() : row!.id;
         let shareId = row?.share_id || '';

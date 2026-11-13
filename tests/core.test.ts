@@ -1,6 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { participantSchema, emptyParticipant } from '../shared/participant.ts';
+import { participantSchema, storedParticipant, emptyParticipant } from '../shared/participant.ts';
 import { inRegion, region } from '../server/geography.ts';
 import { booleanPointInPolygon } from '@turf/boolean-point-in-polygon';
 import { locations, searchLocations, locationById } from '../shared/locations.ts';
@@ -13,6 +13,21 @@ test('administrative geography includes Moscow, New Moscow, Zelenograd and oblas
   const border = region.features[1].geometry.type === 'Polygon' ? region.features[1].geometry.coordinates[0][0] : region.features[1].geometry.coordinates[0][0][0];
   assert.equal(inRegion(border[1],border[0]),true,'a point on the saved administrative boundary is allowed');
   assert.equal(region.features.some(f => booleanPointInPolygon([37.181,55.982],f)),true);
+});
+
+test('exact coordinates take priority for every entry kind; coordinate pairs and market are validated',()=>{
+  const input={...emptyParticipant,locationId:'moscow-137',name:'Тест'};
+  for(const kind of ['person','garage','service','meetup'] as const){
+    const parsed=participantSchema.parse({...input,kind,exactLatitude:55.75312,exactLongitude:37.62123});
+    assert.equal(parsed.latitude,55.75312);assert.equal(parsed.longitude,37.62123);
+    assert.equal(participantSchema.safeParse({...input,kind,exactLatitude:55.75}).success,false);
+  }
+  for(const exactLatitude of [NaN,Infinity,91])assert.equal(participantSchema.safeParse({...input,exactLatitude,exactLongitude:37}).success,false);
+  for(const market of ['JDM','USDM','EDM'])assert.equal(participantSchema.parse({...input,market}).market,market);
+  for(const transmission of ['Робот','Вариатор'])assert.equal(participantSchema.safeParse({...input,transmission}).success,false);
+  const legacy={name:'Старый гараж',kind:'garage',locationId:'moscow-137',latitude:55.75312,longitude:37.62123,transmission:'Робот',steering:'Правый'};
+  const point=storedParticipant(legacy);assert.equal(point.exactLatitude,legacy.latitude);assert.equal(point.longitude,legacy.longitude);
+  const person=storedParticipant({...legacy,kind:'person'});assert.equal(person.exactLatitude,null);assert.equal(person.latitude,55.61563);assert.equal(person.market,'');assert.equal(person.transmission,'');assert.equal('steering' in person,false);
 });
 test('catalog autocomplete, whole cities, legacy migration and shared district positions', () => {
   assert.equal(searchLocations('Москва, Яс')[0].label,'Москва, Ясенево');

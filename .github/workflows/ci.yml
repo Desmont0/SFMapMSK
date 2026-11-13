@@ -26,6 +26,17 @@ jobs:
         run: npm run build
       - name: Test
         run: npm test
+      - name: Install browser runtimes
+        run: npx playwright install --with-deps chromium webkit
+      - name: Check mobile browsers
+        run: npm run test:browser
+      - name: Save browser failure diagnostics
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-diagnostics
+          path: test-results/
+          retention-days: 7
       - name: Check Bash syntax
         run: bash -n install.sh && bash -n update.sh && bash -n tests/deployment.sh
       - name: Audit dependencies

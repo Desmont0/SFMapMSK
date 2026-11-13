@@ -6,7 +6,7 @@ export function statistics(entries: PublicParticipant[]) {
     people:people.length,places:entries.length-people.length,
     sections:[
       {title:'Точки на карте',total:entries.length-people.length,rows:counts(entries.filter(p=>p.kind!=='person').map(p=>kindLabels[p.kind]))},
-      ...([['city','Районы и города'],['year','Год выпуска'],['color','Цвет'],['engine','Двигатель, л'],['transmission','КПП'],['aspiration','Атмо / турбо'],['steering','Руль'],['sunroof','Люкатый']] as const).map(([key,title])=>({title,total:people.length,rows:counts(people.map(p=>p[key]))})),
+      ...([['city','Районы и города'],['year','Год выпуска'],['color','Цвет'],['engine','Двигатель, л'],['transmission','КПП'],['aspiration','Атмо / турбо'],['market','Рынок'],['sunroof','Люкатый']] as const).map(([key,title])=>({title,total:people.length,rows:counts(people.map(p=>p[key]))})),
     ],
   };
 }
