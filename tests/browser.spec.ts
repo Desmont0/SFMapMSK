@@ -21,7 +21,9 @@ test('direct links copy immediately, preserve comments safely and show exact coo
   });
   await page.goto('/p/'+person.shareId);
   const card=page.getByRole('article',{name:'Участник '+person.name});await expect(card).toBeVisible();
-  await expect(page.getByRole('button',{name:'Приблизить карту',exact:true})).toBeEnabled();
+  // A cold WebKit software renderer in Linux CI can need more than five seconds.
+  // Still require successful initialization before the map's 20-second watchdog.
+  await expect(page.getByRole('button',{name:'Приблизить карту',exact:true})).toBeEnabled({timeout:15000});
   await card.getByRole('button',{name:'Поделиться',exact:true}).click();
   await expect(card.getByRole('status')).toHaveText('Ссылка скопирована');
   expect(await page.evaluate(()=>(window as any).copied[0])).toBe('http://127.0.0.1:18765/p/'+person.shareId);
