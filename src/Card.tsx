@@ -26,7 +26,7 @@ export function Card({participant:p, onClose, preview=false}: {participant:Publi
     {p.avatar&&<img className="card-photo" key={p.avatar} src={p.avatar} alt={'Фото: '+p.name} onError={e=>{e.currentTarget.style.display='none';}}/>}
     {p.kind!=='person'&&p.address&&<p className="public-comment">{p.address}</p>}
     {p.kind==='garage'&&p.owner&&<p className="place-owner">Владелец: <a href={'/p/'+p.owner.shareId}>{p.owner.name}</a></p>}
-    {(p.kind!=='person'||p.exactLatitude!==null)&&<div className="coordinate-actions"><button type="button" onClick={async()=>{if(await copyText(coordinates))setShareStatus('Координаты скопированы');else {setShareFallback(coordinates);setShareStatus('Скопируйте координаты');}}} title="Скопировать координаты">⌖ {coordinates}</button><a href={'https://yandex.ru/maps/?pt='+p.longitude+','+p.latitude+'&z=17&l=map'} target="_blank" rel="noopener noreferrer">Навигация ↗</a></div>}
+    {p.kind!=='person'&&<div className="coordinate-actions"><button type="button" onClick={async()=>{if(await copyText(coordinates))setShareStatus('Координаты скопированы');else {setShareFallback(coordinates);setShareStatus('Скопируйте координаты');}}} title="Скопировать координаты">⌖ {coordinates}</button><a href={'https://yandex.ru/maps/?pt='+p.longitude+','+p.latitude+'&z=17&l=map'} target="_blank" rel="noopener noreferrer">Навигация ↗</a></div>}
     {p.plate && <div className="plate"><span>{p.plate}</span><small>RUS <i/></small></div>}
     {specs.length > 0 && <div className="specs">{specs.map((s,i)=><span key={i}>{s}</span>)}</div>}
     {p.comment && <p className="public-comment"><LinkedText text={p.comment}/></p>}

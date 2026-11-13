@@ -44,6 +44,7 @@ function markerElement(p:PublicParticipant) {
 }
 function clusterElement(leaves:PublicParticipant[]) {
   const button=document.createElement('button');button.type='button';button.className='cluster';button.setAttribute('aria-label','Открыть группу: '+leaves.length+' записей');
+  button.dataset.entryIds=JSON.stringify(leaves.map(p=>p.id));
   const stack=document.createElement('span');stack.className='cluster-stack';
   leaves.slice(0,3).forEach((p,index)=>{
     const avatar=document.createElement('span');avatar.className='cluster-avatar kind-'+p.kind;avatar.style.setProperty('--stack-index',String(index));avatar.style.setProperty('--avatar-hue',String(avatarHue(p.name)));
@@ -53,11 +54,17 @@ function clusterElement(leaves:PublicParticipant[]) {
     stack.append(avatar);
   });button.append(stack);return button;
 }
+function highlightMarker(element:HTMLElement,selected:string|null,group:string[]) {
+  const ids:string[]=element.dataset.entryId?[element.dataset.entryId]:JSON.parse(element.dataset.entryIds||'[]');
+  const active=selected!==null?ids.includes(selected):group.some(id=>ids.includes(id));
+  element.classList.toggle('is-selected',active);element.setAttribute('aria-pressed',String(active));
+}
 export default function MapView({participants,theme,focus,settings}:Props) {
   const container=useRef<HTMLDivElement>(null),map=useRef<maplibregl.Map|null>(null),markers=useRef<maplibregl.Marker[]>([]);
   const view=useRef<{center:[number,number];zoom:number}>({center:[37.58,55.77],zoom:9.15});
   const [selected,setSelected]=useState<string|null>(null),[group,setGroup]=useState<string[]>([]),[ready,setReady]=useState(false),[error,setError]=useState(''),[attempt,setAttempt]=useState(0),[zoom,setZoom]=useState(view.current.zoom);
   const appliedFocus=useRef<number|null>(null),retries=useRef(0),readyRef=useRef(false);
+  const selection=useRef<{selected:string|null;group:string[]}>({selected:null,group:[]});
   const retry=()=>{retries.current=0;setAttempt(v=>v+1);};
   useEffect(()=>{
     let disposed=false,initialized=false;setReady(false);readyRef.current=false;setError('');
@@ -111,6 +118,11 @@ export default function MapView({participants,theme,focus,settings}:Props) {
   useEffect(()=>{if(!error||retries.current>=3)return;const timer=setTimeout(()=>{retries.current++;setAttempt(v=>v+1);},6000);return()=>clearTimeout(timer);},[error]);
   useEffect(()=>{const resume=()=>{if(document.visibilityState==='hidden')return;if(!readyRef.current)retry();else map.current?.resize();};window.addEventListener('online',resume);window.addEventListener('pageshow',resume);document.addEventListener('visibilitychange',resume);return()=>{window.removeEventListener('online',resume);window.removeEventListener('pageshow',resume);document.removeEventListener('visibilitychange',resume);};},[]);
   useEffect(()=>{
+    const visibleSelected=participants.some(p=>p.id===selected)?selected:null;
+    selection.current={selected:visibleSelected,group};
+    markers.current.forEach(marker=>highlightMarker(marker.getElement(),visibleSelected,group));
+  },[selected,group,participants]);
+  useEffect(()=>{
     const m=map.current;if(!ready||!m)return;
     const clusters=clusterEntries(participants,settings.clusterRadius);
     const draw=()=>{
@@ -119,6 +131,7 @@ export default function MapView({participants,theme,focus,settings}:Props) {
       markers.current.forEach(marker=>marker.remove());
       markers.current=next.map(({members,coordinates})=>{
         const element=members.length===1?markerElement(members[0]):clusterElement(members);
+        highlightMarker(element,selection.current.selected,selection.current.group);
         element.onclick=e=>{e.stopPropagation();if(members.length===1){setGroup([]);setSelected(members[0].id);}else {setSelected(null);setGroup(members.map(p=>p.id));}};
         return new maplibregl.Marker({element,anchor:'center',subpixelPositioning:true}).setLngLat(coordinates).addTo(m);
       });

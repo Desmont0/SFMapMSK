@@ -67,6 +67,11 @@
 @media(max-width:700px){.statistics-toggle{right:18px;bottom:18px;padding:11px 13px}.statistics-panel{left:10px;right:10px;bottom:76px;width:auto;max-height:calc(100dvh - 150px);padding:24px 20px 18px}.share-button{top:11px;right:44px}.card-photo{max-height:220px}}
 
 /* Responsive toolbar and controls, including iPhone landscape safe areas. */
+.public-map .maplibregl-marker.is-selected{z-index:2;outline:3px solid #ffe09a;outline-offset:5px;filter:brightness(1.08)}
+.public-map[data-theme] .map-avatar.is-selected{box-shadow:0 0 0 5px #182a35cc,0 5px 22px #0008}
+.public-map .cluster.is-selected{border-radius:14px;filter:drop-shadow(0 4px 10px #0008)}
+.public-map[data-theme=light] .maplibregl-marker.is-selected{outline-color:#a95806}
+.public-map[data-theme=light] .map-avatar.is-selected{box-shadow:0 0 0 5px #fff,0 5px 22px #4a311455}
 .map-canvas .maplibregl-marker{position:absolute}
 .map-toolbar{position:absolute;z-index:5;top:max(26px,env(safe-area-inset-top));left:max(24px,env(safe-area-inset-left));width:min(390px,calc(100% - 100px - env(safe-area-inset-left) - env(safe-area-inset-right)));display:grid;gap:18px;pointer-events:none}
 .map-toolbar .wordmark{position:static}.map-toolbar .plate-search{position:relative;inset:auto;width:100%;pointer-events:auto}.map-toolbar .plate-results{position:absolute;left:0;right:0;top:100%;width:100%}

@@ -39,7 +39,7 @@ export function storedParticipant(input: Record<string, unknown>) {
 }
 export type ParticipantInput = z.infer<typeof participantSchema>;
 export type Participant = ParticipantInput & { id: string; shareId: string; updatedAt: string; revision: string };
-export type PublicParticipant = Omit<Participant, 'telegram' | 'adminComment' | 'revision'> & { avatar: string | null; owner?: {name:string;shareId:string} | null };
+export type PublicParticipant = Omit<Participant, 'telegram' | 'adminComment' | 'revision' | 'exactLatitude' | 'exactLongitude'> & { avatar: string | null; owner?: {name:string;shareId:string} | null };
 export const fields = ['id','shareId','kind','name','telegram','city','address','ownerId','plate','color','year','sunroof','engine','transmission','aspiration','market','comment','latitude','longitude','exactLatitude','exactLongitude','adminComment','updatedAt','locationId'] as const;
 export const fieldLabels: Record<string, string> = { id:'ID', shareId:'Короткая ссылка', kind:'Тип записи', name:'Имя / название', telegram:'Telegram', city:'Город', address:'Адрес', ownerId:'Владелец гаража (ID)', plate:'Госномер', color:'Цвет', year:'Год выпуска', sunroof:'Люкатый', engine:'Объём двигателя', transmission:'КПП', aspiration:'Атмо / турбо', market:'Рынок', comment:'Комментарий для карты', latitude:'Широта', longitude:'Долгота', exactLatitude:'Точная широта', exactLongitude:'Точная долгота', adminComment:'Комментарий администратора', updatedAt:'Изменено', locationId:'Район или город' };
 export function initials(name: string) { return name.trim().split(/\s+/).slice(0, 2).map(v => v[0]).join('').toUpperCase(); }

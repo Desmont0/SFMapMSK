@@ -13,6 +13,7 @@ import { photoFor, savePhoto, MAX_PHOTO_BYTES } from './photos.ts';
 import { exportText } from './export.ts';
 import { cachedResource, localResources, warmMapCache, mapCacheStatus } from './map-cache.ts';
 import { participantSchema, type PublicParticipant } from '../shared/participant.ts';
+import { locationById } from '../shared/locations.ts';
 import { requireRegion } from './geography.ts';
 import { mapSettingsSchema, defaultMapSettings } from '../shared/map-settings.ts';
 const app = express();
@@ -53,7 +54,12 @@ app.get('/photos/:file', (req,res) => {
 });
 app.get('/api/health', (_req,res) => res.json({ ok:true, source:'sqlite' }));
 const publicParticipant = (p: (typeof repository.snapshot.participants)[number]): PublicParticipant => {
-  const {telegram:_telegram,adminComment:_adminComment,revision:_revision,...visible}=p;
+  const {telegram:_telegram,adminComment:_adminComment,revision:_revision,exactLatitude:_exactLatitude,exactLongitude:_exactLongitude,...visible}=p;
+  // Publish only the district/city centre for people, including on direct links.
+  if(p.kind==='person'){
+    const place=locationById.get(p.locationId)!;
+    visible.latitude=place.latitude;visible.longitude=place.longitude;
+  }
   const owner = p.ownerId ? repository.snapshot.participants.find(entry=>entry.id===p.ownerId&&entry.kind==='person') : null;
   return {...visible,avatar:photoFor(p.id),owner:owner?{name:owner.name,shareId:owner.shareId}:null};
 };

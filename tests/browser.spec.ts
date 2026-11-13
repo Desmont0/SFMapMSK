@@ -10,7 +10,7 @@ async function mapStyle(page:Page){
 }
 async function entries(page:Page){return (await (await page.request.get('/api/participants')).json()).participants as Array<{id:string;name:string;shareId:string;kind:string}>;}
 
-test('direct links copy immediately, preserve comments safely and show exact coordinates',async({page})=>{
+test('direct links hide person coordinates, highlight selection and copy place coordinates',async({page})=>{
   await mapStyle(page);const records=await entries(page),person=records.find(p=>p.kind==='person')!;
   await page.addInitScript(()=>{
     (window as any).copied=[];(window as any).shareCalls=0;
@@ -31,11 +31,32 @@ test('direct links copy immediately, preserve comments safely and show exact coo
   await expect(card.locator('.public-comment a')).toHaveAttribute('href','https://example.com/test');
   await expect(card.locator('.public-comment img')).toHaveCount(0);
   await expect(card.locator('.public-comment')).toContainText('<img src=x');
-  await card.getByRole('button',{name:/55.850000, 37.700000/}).click();
-  expect(await page.evaluate(()=>(window as any).copied.at(-1))).toBe('55.850000, 37.700000');
+  await expect(card.locator('.coordinate-actions')).toHaveCount(0);
+  await expect(card.getByRole('link',{name:'Навигация ↗'})).toHaveCount(0);
+  const selected=page.locator('.maplibregl-marker.is-selected');
+  await expect(selected).toHaveCount(1);await expect(selected).toHaveAttribute('data-entry-id',person.id);
+  await expect(selected).toHaveAttribute('aria-pressed','true');await expect(selected).toHaveCSS('outline-style','solid');
+  await page.screenshot({path:'test-results/'+test.info().project.name+'-selected-dark.png'});
+  await page.getByRole('button',{name:'Включить светлую тему'}).click();
+  await expect(selected).toHaveAttribute('data-entry-id',person.id);
+  await expect(selected).toHaveCSS('outline-color','rgb(169, 88, 6)');
+  await page.screenshot({path:'test-results/'+test.info().project.name+'-selected-light.png'});
+  await card.getByRole('button',{name:'Закрыть карточку'}).click();await expect(selected).toHaveCount(0);
   const garage=records.find(p=>p.kind==='garage')!;await page.goto('/p/'+garage.shareId);
   await expect(page.locator('.place-owner a')).toHaveAttribute('href','/p/'+person.shareId);
-  await expect(page.getByRole('link',{name:'Навигация ↗'})).toHaveAttribute('href',/pt=37.5,55.65/);
+  await page.getByRole('button',{name:/55.850000, 37.500000/}).click();
+  expect(await page.evaluate(()=>(window as any).copied.at(-1))).toBe('55.850000, 37.500000');
+  await expect(page.getByRole('link',{name:'Навигация ↗'})).toHaveAttribute('href',/pt=37.5,55.85/);
+  await expect(selected).toHaveAttribute('data-entry-id',garage.id);
+  await page.getByRole('button',{name:'Закрыть карточку'}).click();await expect(selected).toHaveCount(0);
+  const search=page.getByRole('textbox',{name:'Поиск по госномеру, имени или месту'});
+  await search.fill(person.name);await page.locator('#plate-results').getByRole('button').click();
+  await expect(selected).toHaveAttribute('data-entry-id',person.id);await expect(card).toBeVisible();
+  for(const kind of ['service','meetup']){
+    const place=records.find(p=>p.kind===kind)!;await page.goto('/p/'+place.shareId);
+    await expect(page.getByRole('button',{name:/55.700000, 37.800000/})).toBeVisible();
+    await expect(page.getByRole('link',{name:'Навигация ↗'})).toHaveAttribute('href',/pt=37.8,55.7/);
+  }
 });
 
 test('quick filters, statistics outside click and landscape controls fit the viewport',async({page})=>{
@@ -48,7 +69,7 @@ test('quick filters, statistics outside click and landscape controls fit the vie
   await expect(page.locator('.maplibregl-marker')).toHaveClass(/kind-person/);
   await page.getByRole('button',{name:'Все',exact:true}).click();
   await page.getByRole('button',{name:/Статистика/}).click();
-  await expect(page.locator('.statistics-totals')).toHaveText('Участников: 1 · Мест: 2');
+  await expect(page.locator('.statistics-totals')).toHaveText('Участников: 1 · Мест: 3');
   expect((await page.locator('.statistics-totals').boundingBox())!.height).toBeLessThan(35);
   await page.locator('.maplibregl-canvas').click({position:{x:5,y:240}});await expect(page.locator('.statistics-panel')).toHaveCount(0);
   await page.setViewportSize({width:844,height:390});
@@ -92,15 +113,25 @@ test('groups stay absolutely positioned in both themes through zoom changes',asy
   await page.goto('/');
   await expect(page.locator('.cluster')).toHaveCount(1);
   await expect(page.locator('.cluster')).toHaveCSS('position','absolute');
+  await page.locator('.cluster').click();await expect(page.locator('.cluster')).toHaveClass(/is-selected/);
+  await page.locator('.group-members').getByRole('button',{name:new RegExp(person.name)}).click();
+  await expect(page.getByRole('article')).toBeVisible();
+  await expect(page.locator('.cluster')).toHaveClass(/is-selected/);
   await page.getByRole('button',{name:'Включить светлую тему'}).click();
   await expect(page.locator('.cluster')).toHaveCount(1);
   await expect(page.locator('.cluster')).toHaveCSS('position','absolute');
+  await expect(page.locator('.cluster')).toHaveClass(/is-selected/);
   const before=await page.locator('.cluster').boundingBox();
   await page.getByRole('button',{name:'Приблизить карту',exact:true}).click();
   await expect.poll(()=>page.locator('.map-canvas').getAttribute('data-zoom')).not.toBe('9.15');
   await expect(page.locator('.cluster')).toHaveCSS('position','absolute');
   const after=await page.locator('.cluster').boundingBox();
   expect(before).not.toEqual(after);
+  await expect(page.locator('.cluster')).toHaveClass(/is-selected/);
+  await page.getByRole('button',{name:'Закрыть карточку'}).click();
+  await expect(page.getByRole('region',{name:'Участники группы'})).toBeVisible();
+  await page.getByRole('button',{name:'Закрыть список'}).click();
+  await expect(page.locator('.maplibregl-marker.is-selected')).toHaveCount(0);
 });
 
 test('cached TileJSON templates reach the worker as valid absolute URLs',async({page})=>{
