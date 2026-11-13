@@ -14,15 +14,25 @@ docker compose stop sfmap
 docker compose run --rm --no-deps -T sfmap node --import tsx --input-type=module -e "import {Repository} from './server/repository.ts'; import {db} from './server/db.ts'; import {emptyParticipant} from './shared/participant.ts'; const r=new Repository(); await r.initialize(); await r.mutate('create',{...emptyParticipant,name:'Upgrade participant',locationId:'moscow-137',telegram:'https://t.me/sfmap_ci',plate:'А123АА 777',sunroof:'Да',adminComment:'preserve private data'}); db.exec('DROP TABLE photos; DROP TABLE participant_links; PRAGMA user_version=0'); db.close();"
 docker compose up -d --wait --wait-timeout 120
 docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); const rows=d.prepare('SELECT * FROM participants ORDER BY id').all(); if(rows.length!==1)throw Error('missing seed'); console.log(JSON.stringify(rows));" > "$TMP/before.json"
-# Successful fast-forward update from a local origin.
+# Change runtime files too: updating only README would leave their readable modes untouched.
 printf '\n' >> README.md
-git add README.md
+printf '\n' >> package.json
+printf '\n' >> server/index.ts
+printf '\n' >> shared/participant.ts
+printf '\n' >> scripts/migrate.ts
+git add README.md package.json server/index.ts shared/participant.ts scripts/migrate.ts
 git commit -m 'CI: simulate successful upgrade'
 git push origin HEAD:main
 GOOD=$(git rev-parse HEAD)
 git reset --hard "$BASE"
 bash "$TMP/update.sh" "$ROOT"
 test "$(git rev-parse HEAD)" = "$GOOD"
+test "$(stat -c '%a' package.json)" = 600
+test "$(stat -c '%a' server/index.ts)" = 600
+test "$(stat -c '%a' scripts/migrate.ts)" = 600
+latest_backup=$(find backups -mindepth 1 -maxdepth 1 -type d | sort | tail -n 1)
+test "$(stat -c '%a' "$latest_backup/database.sqlite")" = 600
+test "$(stat -c '%a' "$latest_backup/env")" = 600
 docker compose exec -T sfmap node --input-type=module -e "import {DatabaseSync} from 'node:sqlite'; const d=new DatabaseSync('/app/data/sfmap.sqlite'); if(d.prepare('PRAGMA user_version').get().user_version!==2)throw Error('migration not applied'); if(d.prepare('SELECT count(*) AS n FROM participant_links').get().n!==1)throw Error('share link migration not applied'); console.log(JSON.stringify(d.prepare('SELECT * FROM participants ORDER BY id').all()));" > "$TMP/after.json"
 cmp "$TMP/before.json" "$TMP/after.json"
 # Failing migration actually changes data before throwing, proving backup restoration.

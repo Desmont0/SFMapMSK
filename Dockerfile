@@ -23,7 +23,11 @@ COPY --chown=node:node public/geo ./public/geo
 COPY --chown=node:node scripts/setup-admin.ts ./scripts/setup-admin.ts
 COPY --chown=node:node scripts/migrate.ts ./scripts/migrate.ts
 COPY --chown=node:node scripts/export.ts scripts/cache-map.ts ./scripts/
-RUN mkdir -p /app/data /app/secrets && chown node:node /app/data /app/secrets
+# Git can create 600/700 source files under update.sh's private umask.
+# Normalize image code for any Compose UID; mounted data and secrets stay private.
+RUN chmod -R a+rX /app \
+    && mkdir -p /app/data /app/secrets \
+    && chown node:node /app/data /app/secrets
 USER node
 EXPOSE 3000 3001
 HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 CMD ["node", "--input-type=module", "-e", "const r=await fetch('http://127.0.0.1:'+(process.env.SHARE_PORT||3001)+'/api/health');if(!r.ok)process.exit(1)"]

@@ -71,8 +71,22 @@ jobs:
           MAP_CACHE_AUTO=false
           EOF
           chmod 600 .env
+      - name: Reproduce restrictive update checkout permissions
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          git ls-files -z | xargs -0 chmod go-rwx
+          find src shared server scripts tests public -type d -exec chmod go-rwx {} +
+          test "$(stat -c '%a' package.json)" = 600
       - name: Build image
         run: docker compose build
+      - name: Check image with a different unprivileged UID
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          docker compose run --rm --no-deps -T --user 12345:12345 \
+            -e DATA_DIR=/tmp/sfmap-data -e SECRETS_DIR=/tmp/sfmap-secrets \
+            sfmap npm run db:migrate
       - name: Validate remote admin Compose override
         run: docker compose -f compose.yaml -f compose.remote-admin.yaml config --quiet
       - name: Prepare writable volumes
